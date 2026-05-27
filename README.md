@@ -35,6 +35,17 @@ tests/
 
 ## Local Setup
 
+Recommended tools for working on this project:
+
+- Python 3.12
+- Git
+- Docker Desktop, for local Redis and later local Kubernetes
+- GitHub CLI, optional but helpful for PRs and CI checks
+- `kubectl`, helpful for learning and inspecting clusters manually, though DevAssist itself will use the Kubernetes API client rather than shelling out to `kubectl`
+- kind or minikube, optional later if you do not use Docker Desktop Kubernetes
+
+You do not need all Kubernetes tooling on day one. For the current phase, Python and Git are enough; Redis and Kubernetes become useful in the next phases.
+
 Create and activate a virtual environment:
 
 ```powershell
@@ -46,6 +57,12 @@ Install the API and development dependencies:
 
 ```powershell
 python -m pip install -e .[dev]
+```
+
+Copy the example environment file when local services are added:
+
+```powershell
+Copy-Item .env.example .env
 ```
 
 Run the test suite:
@@ -76,6 +93,10 @@ docker run --rm -p 6379:6379 redis:7
 ```
 
 Kubernetes mutation is not implemented yet. When added, DevAssist will use the official Kubernetes Python client against a local/dev cluster such as kind, minikube, or Docker Desktop Kubernetes.
+
+## CI
+
+GitHub Actions runs `python -m pytest` on pull requests and pushes to `main`.
 
 ## Current Phase
 
