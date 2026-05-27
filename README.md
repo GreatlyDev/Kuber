@@ -24,6 +24,7 @@ packages/
       langchain_parser.py
       plan_builder.py
       policy.py
+      run_store.py
       schemas.py
 tests/
   test_health.py
@@ -44,7 +45,7 @@ Recommended tools for working on this project:
 - `kubectl`, helpful for learning and inspecting clusters manually, though DevAssist itself will use the Kubernetes API client rather than shelling out to `kubectl`
 - kind or minikube, optional later if you do not use Docker Desktop Kubernetes
 
-You do not need all Kubernetes tooling on day one. For the current phase, Python and Git are enough; Redis and Kubernetes become useful in the next phases.
+You do not need all Kubernetes tooling on day one. For the current code, Python and Git are enough to run tests; Redis becomes useful when manually exercising run state locally, and Kubernetes becomes useful in the next implementation phase.
 
 Create and activate a virtual environment:
 
@@ -84,7 +85,10 @@ Health endpoints:
 
 ## Local Dependencies
 
-Redis is part of the MVP architecture for run state and event streams. The current phase only defines Redis keys in the strict schemas; the Redis client implementation comes later.
+Redis is used for run state and run event streams. `RedisRunStore` stores each `ExecutionRun` in a Redis hash and each `RunEvent` in a Redis stream using deterministic keys:
+
+- `devassist:runs:{run_id}`
+- `devassist:runs:{run_id}:events`
 
 For local development, run Redis with Docker when needed:
 
@@ -98,9 +102,9 @@ Kubernetes mutation is not implemented yet. When added, DevAssist will use the o
 
 GitHub Actions runs `python -m pytest` on pull requests and pushes to `main`.
 
-## Current Phase
+## Current Scope
 
-Implemented in Phase 0/1:
+Implemented so far:
 
 - Monorepo structure
 - FastAPI health and readiness endpoints
@@ -108,12 +112,12 @@ Implemented in Phase 0/1:
 - Policy validator with tests
 - Execution plan builder with tests
 - Deterministic LangChain-shaped parser stub with tests
+- Redis-backed run state and run event store with tests
 - README setup instructions
 
 Not implemented yet:
 
 - Real LangChain model calls
-- Redis persistence layer
 - Kubernetes API execution
 - Approval UI/API
 - Production deployment manifests
