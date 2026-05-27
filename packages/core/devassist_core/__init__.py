@@ -1,1 +1,1 @@
-"""Core schemas and deterministic orchestration logic for DevAssist."""
+"""Core schemas, policy, planning, and Redis state for DevAssist."""
