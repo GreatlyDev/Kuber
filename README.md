@@ -21,6 +21,7 @@ apps/
 packages/
   core/
     devassist_core/
+      kubernetes_executor.py
       langchain_parser.py
       plan_builder.py
       plan_repository.py
@@ -98,6 +99,8 @@ Plan approval is intentionally separate from execution. These endpoints can crea
 
 Run queueing is also guarded. `queue_execution_run` validates the plan policy first, then records a queued `ExecutionRun` and `run.queued` event through Redis-backed storage. It still does not execute Kubernetes actions.
 
+Kubernetes execution is handled through an injected Kubernetes API client interface. Draft mutating plans are blocked before any client method is called. Approved deploy and scale plans patch Kubernetes deployments through API-client-style methods; status plans read deployment state without approval.
+
 ## Local Dependencies
 
 Redis is used for run state and run event streams. `RedisRunStore` stores each `ExecutionRun` in a Redis hash and each `RunEvent` in a Redis stream using deterministic keys:
@@ -111,7 +114,7 @@ For local development, run Redis with Docker when needed:
 docker run --rm -p 6379:6379 redis:7
 ```
 
-Kubernetes mutation is not implemented yet. When added, DevAssist will use the official Kubernetes Python client against a local/dev cluster such as kind, minikube, or Docker Desktop Kubernetes.
+Live cluster wiring is not implemented yet. The current executor is written around the official Kubernetes Python client's `AppsV1Api` method shapes. Tests use fakes, so no cluster is required in CI.
 
 ## CI
 
@@ -130,11 +133,12 @@ Implemented so far:
 - Deterministic LangChain-shaped parser stub with tests
 - Guarded run queueing service with tests
 - Redis-backed run state and run event store with tests
+- Guarded Kubernetes API executor for deploy, scale, and status plans with tests
 - README setup instructions
 
 Not implemented yet:
 
 - Real LangChain model calls
-- Kubernetes API execution
+- Live Kubernetes cluster wiring
 - Approval UI/API
 - Production deployment manifests
