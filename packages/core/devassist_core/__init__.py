@@ -1,1 +1,1 @@
-"""Core schemas, policy, planning, and Redis state for DevAssist."""
+"""Core schemas, policy, planning, Redis state, and Kubernetes execution for DevAssist."""
