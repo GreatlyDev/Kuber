@@ -21,6 +21,7 @@ apps/
 packages/
   core/
     devassist_core/
+      kubernetes_client.py
       kubernetes_executor.py
       langchain_parser.py
       plan_builder.py
@@ -101,6 +102,8 @@ Run queueing is also guarded. `queue_execution_run` validates the plan policy fi
 
 Kubernetes execution is handled through an injected Kubernetes API client interface. Draft mutating plans are blocked before any client method is called. Approved deploy and scale plans patch Kubernetes deployments through API-client-style methods; status plans read deployment state without approval.
 
+`build_apps_v1_api` creates an official Kubernetes `AppsV1Api` client. It supports local kubeconfig, in-cluster config, and an auto mode that tries in-cluster config first before falling back to kubeconfig.
+
 ## Local Dependencies
 
 Redis is used for run state and run event streams. `RedisRunStore` stores each `ExecutionRun` in a Redis hash and each `RunEvent` in a Redis stream using deterministic keys:
@@ -114,7 +117,7 @@ For local development, run Redis with Docker when needed:
 docker run --rm -p 6379:6379 redis:7
 ```
 
-Live cluster wiring is not implemented yet. The current executor is written around the official Kubernetes Python client's `AppsV1Api` method shapes. Tests use fakes, so no cluster is required in CI.
+The current executor is written around the official Kubernetes Python client's `AppsV1Api` method shapes. Tests use fakes, so no cluster is required in CI. For local manual testing later, Docker Desktop Kubernetes, kind, or minikube can provide the kubeconfig that `build_apps_v1_api` loads.
 
 ## CI
 
@@ -133,6 +136,7 @@ Implemented so far:
 - Deterministic LangChain-shaped parser stub with tests
 - Guarded run queueing service with tests
 - Redis-backed run state and run event store with tests
+- Local/in-cluster Kubernetes client setup with tests
 - Guarded Kubernetes API executor for deploy, scale, and status plans with tests
 - README setup instructions
 
