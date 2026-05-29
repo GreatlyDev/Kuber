@@ -3,7 +3,14 @@ from enum import StrEnum
 from typing import Any
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    computed_field,
+    field_validator,
+    model_validator,
+)
 
 KUBERNETES_NAME_PATTERN = r"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
 
@@ -73,6 +80,7 @@ class ExecutionPlan(StrictModel):
     approved_by: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
+    @computed_field
     @property
     def approved(self) -> bool:
         return self.status is PlanStatus.APPROVED
