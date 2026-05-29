@@ -25,6 +25,7 @@ packages/
       plan_builder.py
       plan_repository.py
       policy.py
+      run_service.py
       run_store.py
       schemas.py
 tests/
@@ -95,6 +96,8 @@ Plan endpoints:
 
 Plan approval is intentionally separate from execution. These endpoints can create, inspect, approve, reject, and validate an `ExecutionPlan`, but they do not run Kubernetes actions.
 
+Run queueing is also guarded. `queue_execution_run` validates the plan policy first, then records a queued `ExecutionRun` and `run.queued` event through Redis-backed storage. It still does not execute Kubernetes actions.
+
 ## Local Dependencies
 
 Redis is used for run state and run event streams. `RedisRunStore` stores each `ExecutionRun` in a Redis hash and each `RunEvent` in a Redis stream using deterministic keys:
@@ -125,6 +128,7 @@ Implemented so far:
 - Execution plan builder with tests
 - In-memory plan repository and approval API with tests
 - Deterministic LangChain-shaped parser stub with tests
+- Guarded run queueing service with tests
 - Redis-backed run state and run event store with tests
 - README setup instructions
 
