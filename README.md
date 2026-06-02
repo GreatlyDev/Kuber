@@ -18,6 +18,7 @@ apps/
   api/
     devassist_api/
       main.py
+      runtime.py
 packages/
   core/
     devassist_core/
@@ -108,6 +109,13 @@ Kubernetes execution is handled through an injected Kubernetes API client interf
 
 The run execution API requires an explicitly configured execution runtime. By default it returns `503` instead of creating a live Kubernetes client on its own. When configured, the runtime queues a run, records `run.started`, executes through the Kubernetes executor, and records `run.succeeded` or `run.failed`.
 
+Runtime wiring is controlled by environment variables:
+
+- `DEVASSIST_EXECUTION_ENABLED=false` keeps live execution disabled by default.
+- `REDIS_URL=redis://localhost:6379/0` points the runtime at Redis.
+- `KUBERNETES_CONFIG_MODE=auto` supports `auto`, `kubeconfig`, or `in_cluster`.
+- `KUBERNETES_CONTEXT=` can select a local kubeconfig context such as `docker-desktop`.
+
 ## Local Dependencies
 
 Redis is used for run state and run event streams. `RedisRunStore` stores each `ExecutionRun` in a Redis hash and each `RunEvent` in a Redis stream using deterministic keys:
@@ -121,7 +129,7 @@ For local development, run Redis with Docker when needed:
 docker run --rm -p 6379:6379 redis:7
 ```
 
-The current executor is written around the official Kubernetes Python client's `AppsV1Api` method shapes. Tests use fakes, so no cluster is required in CI. For local manual testing later, Docker Desktop Kubernetes, kind, or minikube can provide the kubeconfig that `build_apps_v1_api` loads.
+The current executor is written around the official Kubernetes Python client's `AppsV1Api` method shapes. Tests use fakes, so no cluster is required in CI. For local manual testing later, Docker Desktop Kubernetes, kind, or minikube can provide the kubeconfig that `build_apps_v1_api` loads. Set `DEVASSIST_EXECUTION_ENABLED=true` only when Redis is running and your Kubernetes context is pointed at a dev cluster.
 
 ## CI
 
@@ -138,6 +146,7 @@ Implemented so far:
 - Execution plan builder with tests
 - In-memory plan repository and approval API with tests
 - Guarded run execution API with tests
+- Opt-in local runtime wiring through Redis and Kubernetes client settings
 - Deterministic LangChain-shaped parser stub with tests
 - Execution runtime with Redis run lifecycle events and tests
 - Guarded run queueing service with tests
@@ -149,6 +158,6 @@ Implemented so far:
 Not implemented yet:
 
 - Real LangChain model calls
-- Live Kubernetes cluster wiring
+- Demo Kubernetes manifests and local cluster runbook
 - Approval UI/API
 - Production deployment manifests
