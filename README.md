@@ -105,6 +105,8 @@ Plan endpoints:
 - `POST /plans/{plan_id}/reject`
 - `POST /plans/{plan_id}/runs`
 - `GET /plans/{plan_id}/policy`
+- `GET /runs/{run_id}`
+- `GET /runs/{run_id}/events`
 
 Plan approval is intentionally separate from execution. These endpoints can create, inspect, approve, reject, and validate an `ExecutionPlan`, but they do not run Kubernetes actions.
 
@@ -156,6 +158,7 @@ Implemented so far:
 - Execution plan builder with tests
 - In-memory plan repository and approval API with tests
 - Guarded run execution API with tests
+- Run and run event inspection API with tests
 - Opt-in local runtime wiring through Redis and Kubernetes client settings
 - Deterministic LangChain-shaped parser stub with tests
 - Execution runtime with Redis run lifecycle events and tests

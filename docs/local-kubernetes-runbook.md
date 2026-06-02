@@ -67,6 +67,13 @@ python scripts/local_demo.py
 
 The script calls DevAssist's API to create a plan, approve it, and run it. It does not call `kubectl`.
 
+Use the printed run id to inspect the stored run and event timeline:
+
+```powershell
+curl http://localhost:8000/runs/<run-id>
+curl http://localhost:8000/runs/<run-id>/events
+```
+
 After the run finishes, inspect Kubernetes manually:
 
 ```powershell
