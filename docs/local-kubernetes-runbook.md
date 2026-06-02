@@ -49,6 +49,31 @@ KUBERNETES_CONTEXT=docker-desktop
 
 If your current kubeconfig context already points at the right dev cluster, leave `KUBERNETES_CONTEXT` blank.
 
+Start the API with those environment values loaded in your PowerShell session:
+
+```powershell
+$env:DEVASSIST_EXECUTION_ENABLED="true"
+$env:REDIS_URL="redis://localhost:6379/0"
+$env:KUBERNETES_CONFIG_MODE="auto"
+$env:KUBERNETES_CONTEXT="docker-desktop"
+python -m uvicorn devassist_api.main:app --reload --port 8000
+```
+
+In a second PowerShell window, run the local demo flow:
+
+```powershell
+python scripts/local_demo.py
+```
+
+The script calls DevAssist's API to create a plan, approve it, and run it. It does not call `kubectl`.
+
+After the run finishes, inspect Kubernetes manually:
+
+```powershell
+kubectl get deployment api -n dev
+kubectl describe deployment api -n dev
+```
+
 ## Safety Notes
 
 - Use only a local/dev cluster for this MVP.
