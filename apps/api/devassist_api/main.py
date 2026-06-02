@@ -12,7 +12,7 @@ from devassist_core.langchain_parser import DeterministicLangChainParser
 from devassist_core.plan_builder import build_execution_plan
 from devassist_core.plan_repository import InMemoryPlanRepository
 from devassist_core.policy import PolicyDecision, validate_execution_plan
-from devassist_core.schemas import ExecutionPlan, ExecutionRun
+from devassist_core.schemas import ExecutionPlan, ExecutionRun, RunEvent
 
 
 @asynccontextmanager
@@ -112,13 +112,22 @@ def run_plan(plan_id: str) -> ExecutionRun:
     if not policy.allowed:
         raise HTTPException(status_code=403, detail=policy.reasons)
 
-    if execution_runtime is None:
-        raise HTTPException(
-            status_code=503,
-            detail="execution runtime is not configured",
-        )
+    return _require_execution_runtime().execute(plan)
 
-    return execution_runtime.execute(plan)
+
+@app.get("/runs/{run_id}", response_model=ExecutionRun)
+def get_run(run_id: str) -> ExecutionRun:
+    runtime = _require_execution_runtime()
+    run = runtime.store.get_run(run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail=f"run '{run_id}' was not found")
+    return run
+
+
+@app.get("/runs/{run_id}/events", response_model=list[RunEvent])
+def get_run_events(run_id: str) -> list[RunEvent]:
+    runtime = _require_execution_runtime()
+    return runtime.store.list_events(run_id)
 
 
 def _load_plan(plan_id: str) -> ExecutionPlan:
@@ -130,6 +139,15 @@ def _load_plan(plan_id: str) -> ExecutionPlan:
 
 def _not_found(plan_id: str) -> HTTPException:
     return HTTPException(status_code=404, detail=f"plan '{plan_id}' was not found")
+
+
+def _require_execution_runtime():
+    if execution_runtime is None:
+        raise HTTPException(
+            status_code=503,
+            detail="execution runtime is not configured",
+        )
+    return execution_runtime
 
 
 def configure_execution_runtime(
