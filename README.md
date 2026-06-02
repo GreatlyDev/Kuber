@@ -43,6 +43,8 @@ tests/
   test_plan_builder.py
   test_policy_validator.py
   test_schemas.py
+scripts/
+  local_demo.py
 ```
 
 ## Local Setup
@@ -137,6 +139,7 @@ docker run --rm -p 6379:6379 redis:7
 The current executor is written around the official Kubernetes Python client's `AppsV1Api` method shapes. Tests use fakes, so no cluster is required in CI. For local manual testing later, Docker Desktop Kubernetes, kind, or minikube can provide the kubeconfig that `build_apps_v1_api` loads. Set `DEVASSIST_EXECUTION_ENABLED=true` only when Redis is running and your Kubernetes context is pointed at a dev cluster.
 
 For local Kubernetes practice, see `docs/local-kubernetes-runbook.md`. The demo manifest at `deploy/local/demo-app.yaml` creates an `api` Deployment and Service in the `dev` namespace.
+The helper script at `scripts/local_demo.py` calls DevAssist's API to create, approve, and run the demo plan.
 
 ## CI
 
@@ -161,6 +164,7 @@ Implemented so far:
 - Local/in-cluster Kubernetes client setup with tests
 - Guarded Kubernetes API executor for deploy, scale, and status plans with tests
 - Local Kubernetes demo manifest and runbook
+- Local demo API script with tests
 - README setup instructions
 
 Not implemented yet:
