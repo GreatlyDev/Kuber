@@ -1,16 +1,31 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field
 
+from devassist_api.runtime import (
+    RuntimeSettings,
+    build_execution_runtime,
+    load_settings,
+)
 from devassist_core.langchain_parser import DeterministicLangChainParser
 from devassist_core.plan_builder import build_execution_plan
 from devassist_core.plan_repository import InMemoryPlanRepository
 from devassist_core.policy import PolicyDecision, validate_execution_plan
 from devassist_core.schemas import ExecutionPlan, ExecutionRun
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    configure_execution_runtime()
+    yield
+
+
 app = FastAPI(
     title="DevAssist API",
     version="0.1.0",
     description="Local MVP API for Kubernetes-native CI/CD orchestration.",
+    lifespan=lifespan,
 )
 parser = DeterministicLangChainParser()
 plan_repository = InMemoryPlanRepository()
@@ -36,11 +51,12 @@ def healthz() -> dict[str, str]:
 
 @app.get("/readyz")
 def readyz() -> dict[str, object]:
+    runtime_status = "configured" if execution_runtime is not None else "not_configured"
     return {
         "status": "ready",
         "dependencies": {
-            "kubernetes": "not_configured",
-            "redis": "not_configured",
+            "kubernetes": runtime_status,
+            "redis": runtime_status,
         },
     }
 
@@ -114,3 +130,12 @@ def _load_plan(plan_id: str) -> ExecutionPlan:
 
 def _not_found(plan_id: str) -> HTTPException:
     return HTTPException(status_code=404, detail=f"plan '{plan_id}' was not found")
+
+
+def configure_execution_runtime(
+    settings: RuntimeSettings | None = None,
+    runtime_builder=build_execution_runtime,
+) -> None:
+    global execution_runtime
+    settings = settings or load_settings()
+    execution_runtime = runtime_builder(settings)
