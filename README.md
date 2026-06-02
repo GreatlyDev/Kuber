@@ -98,6 +98,7 @@ Health endpoints:
 
 Plan endpoints:
 
+- `GET /deployments/{namespace}/{app_name}/state`
 - `POST /plans`
 - `GET /plans`
 - `GET /plans/{plan_id}`
@@ -157,6 +158,7 @@ Implemented so far:
 - Policy validator with tests
 - Execution plan builder with tests
 - In-memory plan repository and approval API with tests
+- Read-only deployment status API with tests
 - Guarded run execution API with tests
 - Run and run event inspection API with tests
 - Opt-in local runtime wiring through Redis and Kubernetes client settings

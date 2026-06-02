@@ -74,6 +74,12 @@ curl http://localhost:8000/runs/<run-id>
 curl http://localhost:8000/runs/<run-id>/events
 ```
 
+Inspect the deployment state through DevAssist's Kubernetes API-client path:
+
+```powershell
+curl http://localhost:8000/deployments/dev/api/state
+```
+
 After the run finishes, inspect Kubernetes manually:
 
 ```powershell
