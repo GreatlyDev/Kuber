@@ -21,6 +21,7 @@ apps/
 packages/
   core/
     devassist_core/
+      execution_runtime.py
       kubernetes_client.py
       kubernetes_executor.py
       langchain_parser.py
@@ -94,6 +95,7 @@ Plan endpoints:
 - `GET /plans/{plan_id}`
 - `POST /plans/{plan_id}/approve`
 - `POST /plans/{plan_id}/reject`
+- `POST /plans/{plan_id}/runs`
 - `GET /plans/{plan_id}/policy`
 
 Plan approval is intentionally separate from execution. These endpoints can create, inspect, approve, reject, and validate an `ExecutionPlan`, but they do not run Kubernetes actions.
@@ -103,6 +105,8 @@ Run queueing is also guarded. `queue_execution_run` validates the plan policy fi
 Kubernetes execution is handled through an injected Kubernetes API client interface. Draft mutating plans are blocked before any client method is called. Approved deploy and scale plans patch Kubernetes deployments through API-client-style methods; status plans read deployment state without approval.
 
 `build_apps_v1_api` creates an official Kubernetes `AppsV1Api` client. It supports local kubeconfig, in-cluster config, and an auto mode that tries in-cluster config first before falling back to kubeconfig.
+
+The run execution API requires an explicitly configured execution runtime. By default it returns `503` instead of creating a live Kubernetes client on its own. When configured, the runtime queues a run, records `run.started`, executes through the Kubernetes executor, and records `run.succeeded` or `run.failed`.
 
 ## Local Dependencies
 
@@ -133,7 +137,9 @@ Implemented so far:
 - Policy validator with tests
 - Execution plan builder with tests
 - In-memory plan repository and approval API with tests
+- Guarded run execution API with tests
 - Deterministic LangChain-shaped parser stub with tests
+- Execution runtime with Redis run lifecycle events and tests
 - Guarded run queueing service with tests
 - Redis-backed run state and run event store with tests
 - Local/in-cluster Kubernetes client setup with tests
