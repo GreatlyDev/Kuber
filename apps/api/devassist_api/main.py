@@ -5,7 +5,7 @@ from devassist_core.langchain_parser import DeterministicLangChainParser
 from devassist_core.plan_builder import build_execution_plan
 from devassist_core.plan_repository import InMemoryPlanRepository
 from devassist_core.policy import PolicyDecision, validate_execution_plan
-from devassist_core.schemas import ExecutionPlan
+from devassist_core.schemas import ExecutionPlan, ExecutionRun
 
 app = FastAPI(
     title="DevAssist API",
@@ -14,6 +14,7 @@ app = FastAPI(
 )
 parser = DeterministicLangChainParser()
 plan_repository = InMemoryPlanRepository()
+execution_runtime = None
 
 
 class CreatePlanRequest(BaseModel):
@@ -82,6 +83,26 @@ def reject_plan(plan_id: str) -> ExecutionPlan:
 @app.get("/plans/{plan_id}/policy", response_model=PolicyDecision)
 def get_plan_policy(plan_id: str) -> PolicyDecision:
     return validate_execution_plan(_load_plan(plan_id))
+
+
+@app.post(
+    "/plans/{plan_id}/runs",
+    response_model=ExecutionRun,
+    status_code=status.HTTP_201_CREATED,
+)
+def run_plan(plan_id: str) -> ExecutionRun:
+    plan = _load_plan(plan_id)
+    policy = validate_execution_plan(plan)
+    if not policy.allowed:
+        raise HTTPException(status_code=403, detail=policy.reasons)
+
+    if execution_runtime is None:
+        raise HTTPException(
+            status_code=503,
+            detail="execution runtime is not configured",
+        )
+
+    return execution_runtime.execute(plan)
 
 
 def _load_plan(plan_id: str) -> ExecutionPlan:
