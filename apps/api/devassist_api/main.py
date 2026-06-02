@@ -12,7 +12,14 @@ from devassist_core.langchain_parser import DeterministicLangChainParser
 from devassist_core.plan_builder import build_execution_plan
 from devassist_core.plan_repository import InMemoryPlanRepository
 from devassist_core.policy import PolicyDecision, validate_execution_plan
-from devassist_core.schemas import ExecutionPlan, ExecutionRun, RunEvent
+from devassist_core.schemas import (
+    DeploymentAction,
+    DeploymentState,
+    ExecutionPlan,
+    ExecutionRun,
+    PipelineIntent,
+    RunEvent,
+)
 
 
 @asynccontextmanager
@@ -99,6 +106,27 @@ def reject_plan(plan_id: str) -> ExecutionPlan:
 @app.get("/plans/{plan_id}/policy", response_model=PolicyDecision)
 def get_plan_policy(plan_id: str) -> PolicyDecision:
     return validate_execution_plan(_load_plan(plan_id))
+
+
+@app.get("/deployments/{namespace}/{app_name}/state", response_model=DeploymentState)
+def get_deployment_state(namespace: str, app_name: str) -> DeploymentState:
+    runtime = _require_execution_runtime()
+    plan = build_execution_plan(
+        PipelineIntent(
+            action=DeploymentAction.STATUS,
+            app=app_name,
+            namespace=namespace,
+        )
+    )
+    result = runtime.executor.execute(plan)
+    if not result.policy.allowed:
+        raise HTTPException(status_code=403, detail=result.policy.reasons)
+    if result.deployment_state is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"deployment '{namespace}/{app_name}' was not found",
+        )
+    return result.deployment_state
 
 
 @app.post(
