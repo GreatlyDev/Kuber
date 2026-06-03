@@ -7,6 +7,7 @@ from redis import Redis
 from devassist_core.execution_runtime import ExecutionRuntime
 from devassist_core.kubernetes_client import KubernetesConfigMode, build_apps_v1_api
 from devassist_core.kubernetes_executor import KubernetesPlanExecutor
+from devassist_core.policy import DEFAULT_NAMESPACE_ALLOWLIST
 from devassist_core.run_store import RedisRunStore
 
 
@@ -16,6 +17,7 @@ class RuntimeSettings:
     redis_url: str = "redis://localhost:6379/0"
     kubernetes_config_mode: KubernetesConfigMode = KubernetesConfigMode.AUTO
     kubernetes_context: str | None = None
+    allowed_namespaces: tuple[str, ...] = tuple(sorted(DEFAULT_NAMESPACE_ALLOWLIST))
 
 
 def load_settings(environ: Mapping[str, str] | None = None) -> RuntimeSettings:
@@ -29,6 +31,10 @@ def load_settings(environ: Mapping[str, str] | None = None) -> RuntimeSettings:
             environ.get("KUBERNETES_CONFIG_MODE", KubernetesConfigMode.AUTO)
         ),
         kubernetes_context=environ.get("KUBERNETES_CONTEXT") or None,
+        allowed_namespaces=_parse_csv(
+            environ.get("DEVASSIST_ALLOWED_NAMESPACES"),
+            default=tuple(sorted(DEFAULT_NAMESPACE_ALLOWLIST)),
+        ),
     )
 
 
@@ -47,9 +53,20 @@ def build_execution_runtime(
     )
     return ExecutionRuntime(
         store=RedisRunStore(redis_client),
-        executor=KubernetesPlanExecutor(apps_v1_api),
+        executor=KubernetesPlanExecutor(
+            apps_v1_api,
+            allowed_namespaces=settings.allowed_namespaces,
+        ),
+        allowed_namespaces=settings.allowed_namespaces,
     )
 
 
 def _parse_bool(value: str) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _parse_csv(value: str | None, *, default: tuple[str, ...]) -> tuple[str, ...]:
+    if value is None:
+        return default
+    parsed = tuple(item.strip() for item in value.split(",") if item.strip())
+    return parsed or default

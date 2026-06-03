@@ -137,11 +137,15 @@ def get_deployment_state(namespace: str, app_name: str) -> DeploymentState:
 )
 def run_plan(plan_id: str) -> ExecutionRun:
     plan = _load_plan(plan_id)
-    policy = validate_execution_plan(plan)
+    runtime = _require_execution_runtime()
+    if hasattr(runtime, "validate"):
+        policy = runtime.validate(plan)
+    else:
+        policy = validate_execution_plan(plan)
     if not policy.allowed:
         raise HTTPException(status_code=403, detail=policy.reasons)
 
-    return _require_execution_runtime().execute(plan)
+    return runtime.execute(plan)
 
 
 @app.get("/runs", response_model=list[ExecutionRun])

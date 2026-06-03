@@ -1,10 +1,14 @@
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from datetime import UTC, datetime
 from typing import Protocol
 
 from pydantic import BaseModel, ConfigDict
 
-from devassist_core.policy import PolicyDecision, validate_execution_plan
+from devassist_core.policy import (
+    DEFAULT_NAMESPACE_ALLOWLIST,
+    PolicyDecision,
+    validate_execution_plan,
+)
 from devassist_core.schemas import (
     DeploymentAction,
     DeploymentState,
@@ -43,12 +47,17 @@ class KubernetesPlanExecutor:
         self,
         apps_v1_api: AppsV1ApiClient,
         clock: Callable[[], datetime] | None = None,
+        allowed_namespaces: Collection[str] | None = None,
     ):
         self.apps_v1_api = apps_v1_api
         self.clock = clock or (lambda: datetime.now(UTC))
+        self.allowed_namespaces = tuple(allowed_namespaces or DEFAULT_NAMESPACE_ALLOWLIST)
 
     def execute(self, plan: ExecutionPlan) -> KubernetesExecutionResult:
-        policy = validate_execution_plan(plan)
+        policy = validate_execution_plan(
+            plan,
+            allowed_namespaces=self.allowed_namespaces,
+        )
         if not policy.allowed:
             return KubernetesExecutionResult(
                 applied=False,

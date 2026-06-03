@@ -4,6 +4,7 @@ from devassist_core.execution_runtime import ExecutionRuntime
 from devassist_core.kubernetes_executor import KubernetesExecutionResult
 from devassist_core.plan_builder import build_execution_plan
 from devassist_core.policy import PolicyDecision
+from devassist_core.run_service import PlanNotAllowedError
 from devassist_core.run_store import RedisRunStore
 from devassist_core.schemas import DeploymentAction, PipelineIntent, PlanStatus, RunStatus
 
@@ -55,12 +56,12 @@ class FakeExecutor:
         )
 
 
-def _approved_plan():
+def _approved_plan(namespace="dev"):
     plan = build_execution_plan(
         PipelineIntent(
             action=DeploymentAction.DEPLOY,
             app="api",
-            namespace="dev",
+            namespace=namespace,
             image="example/api:1.0.0",
         )
     )
@@ -105,3 +106,23 @@ def test_runtime_records_failed_event_and_reraises_error():
         "run.failed",
     ]
     assert events[-1].payload == {"error": "cluster unavailable"}
+
+
+def test_runtime_rejects_plan_outside_allowed_namespaces_before_executor_call():
+    redis = FakeRedis()
+    store = RedisRunStore(redis)
+    executor = FakeExecutor()
+    runtime = ExecutionRuntime(
+        store=store,
+        executor=executor,
+        allowed_namespaces=("dev",),
+    )
+
+    with pytest.raises(PlanNotAllowedError) as exc:
+        runtime.execute(_approved_plan(namespace="staging"))
+
+    assert exc.value.reasons == [
+        "namespace 'staging' is outside the configured namespace allowlist"
+    ]
+    assert redis.hashes == {}
+    assert executor.executed_plan_ids == []

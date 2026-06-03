@@ -1,6 +1,7 @@
 param(
     [string]$KubernetesContext = "docker-desktop",
     [string]$RedisContainerName = "devassist-redis",
+    [string]$AllowedNamespaces = "dev",
     [int]$RedisPort = 6379,
     [int]$ApiPort = 8000,
     [switch]$SkipRedis
@@ -55,10 +56,12 @@ $env:DEVASSIST_EXECUTION_ENABLED = "true"
 $env:REDIS_URL = "redis://localhost:${RedisPort}/0"
 $env:KUBERNETES_CONFIG_MODE = "auto"
 $env:KUBERNETES_CONTEXT = $KubernetesContext
+$env:DEVASSIST_ALLOWED_NAMESPACES = $AllowedNamespaces
 
 Write-Host "Starting DevAssist API on http://127.0.0.1:$ApiPort"
 Write-Host "Redis URL: $env:REDIS_URL"
 Write-Host "Kubernetes context: $env:KUBERNETES_CONTEXT"
+Write-Host "Allowed namespaces: $env:DEVASSIST_ALLOWED_NAMESPACES"
 Write-Host "Press Ctrl+C to stop the API. Run scripts/stop-local-dev.ps1 to stop Redis."
 
 python -m uvicorn devassist_api.main:app --reload --host 127.0.0.1 --port $ApiPort

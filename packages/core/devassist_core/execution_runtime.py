@@ -1,6 +1,12 @@
+from collections.abc import Collection
 from typing import Protocol
 
 from devassist_core.kubernetes_executor import KubernetesExecutionResult
+from devassist_core.policy import (
+    DEFAULT_NAMESPACE_ALLOWLIST,
+    PolicyDecision,
+    validate_execution_plan,
+)
 from devassist_core.run_service import queue_execution_run
 from devassist_core.run_store import RedisRunStore, run_events_key
 from devassist_core.schemas import ExecutionPlan, ExecutionRun, RunEvent, RunStatus
@@ -11,12 +17,28 @@ class PlanExecutor(Protocol):
 
 
 class ExecutionRuntime:
-    def __init__(self, store: RedisRunStore, executor: PlanExecutor):
+    def __init__(
+        self,
+        store: RedisRunStore,
+        executor: PlanExecutor,
+        allowed_namespaces: Collection[str] | None = None,
+    ):
         self.store = store
         self.executor = executor
+        self.allowed_namespaces = tuple(allowed_namespaces or DEFAULT_NAMESPACE_ALLOWLIST)
+
+    def validate(self, plan: ExecutionPlan) -> PolicyDecision:
+        return validate_execution_plan(
+            plan,
+            allowed_namespaces=self.allowed_namespaces,
+        )
 
     def execute(self, plan: ExecutionPlan) -> ExecutionRun:
-        run = queue_execution_run(plan, self.store)
+        run = queue_execution_run(
+            plan,
+            self.store,
+            allowed_namespaces=self.allowed_namespaces,
+        )
         running = self._transition(run, RunStatus.RUNNING)
         self._append_event(running, "run.started", "Run started")
 

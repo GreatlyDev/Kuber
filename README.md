@@ -148,6 +148,9 @@ Runtime wiring is controlled by environment variables:
 - `REDIS_URL=redis://localhost:6379/0` points the runtime at Redis.
 - `KUBERNETES_CONFIG_MODE=auto` supports `auto`, `kubeconfig`, or `in_cluster`.
 - `KUBERNETES_CONTEXT=` can select a local kubeconfig context such as `docker-desktop`.
+- `DEVASSIST_ALLOWED_NAMESPACES=dev` narrows the namespaces DevAssist may touch. If unset, the local-friendly default allowlist is `default,dev,local,staging`.
+
+Namespace allowlisting is enforced by the deterministic policy validator before run queueing and by the Kubernetes executor before API-client calls. Keep the local helper narrowed to `dev` unless you intentionally add another local namespace for practice.
 
 ## Local Dependencies
 
