@@ -131,6 +131,20 @@ def test_execution_endpoint_returns_policy_error_for_draft_plan():
     assert runtime.executed_plan_ids == []
 
 
+def test_execution_endpoint_returns_policy_error_for_rejected_status_plan():
+    runtime = FakeExecutionRuntime()
+    main.execution_runtime = runtime
+    client = TestClient(main.app)
+    created = client.post("/plans", json={"text": "status api in dev"}).json()
+    client.post(f"/plans/{created['plan_id']}/reject")
+
+    response = client.post(f"/plans/{created['plan_id']}/runs")
+
+    assert response.status_code == 403
+    assert response.json() == {"detail": ["rejected ExecutionPlans cannot be run"]}
+    assert runtime.executed_plan_ids == []
+
+
 def test_execution_endpoint_uses_runtime_policy_before_running_plan():
     runtime = FakePolicyRuntime(
         PolicyDecision(

@@ -78,3 +78,25 @@ def test_policy_allows_read_only_status_without_approval():
 
     assert decision.allowed is True
     assert decision.reasons == []
+
+
+def test_policy_rejects_rejected_status_plan():
+    decision = validate_execution_plan(
+        _plan(status=PlanStatus.REJECTED, action=DeploymentAction.STATUS)
+    )
+
+    assert decision == PolicyDecision(
+        allowed=False,
+        reasons=["rejected ExecutionPlans cannot be run"],
+    )
+
+
+def test_policy_rejects_rejected_mutating_plan_with_rejection_reason():
+    decision = validate_execution_plan(
+        _plan(status=PlanStatus.REJECTED, action=DeploymentAction.DEPLOY)
+    )
+
+    assert decision == PolicyDecision(
+        allowed=False,
+        reasons=["rejected ExecutionPlans cannot be run"],
+    )

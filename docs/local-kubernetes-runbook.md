@@ -143,6 +143,7 @@ kubectl describe deployment api -n dev
 
 - Use only a local/dev cluster for this MVP.
 - Mutating actions still require an approved `ExecutionPlan`.
+- Rejected `ExecutionPlan` records cannot be run, even for read-only status checks.
 - DevAssist does not shell out to `kubectl`; manual `kubectl` commands are for setup and inspection only.
 - Keep `DEVASSIST_EXECUTION_ENABLED=false` unless Redis is running and your kubeconfig points at the intended dev cluster.
 - Keep `DEVASSIST_ALLOWED_NAMESPACES=dev` for the demo. Add namespaces only when you have created them intentionally in your local cluster.
