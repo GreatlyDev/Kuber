@@ -1,4 +1,5 @@
 from collections.abc import Collection
+from datetime import UTC, datetime
 from typing import Protocol
 
 from devassist_core.kubernetes_executor import KubernetesExecutionResult
@@ -22,10 +23,12 @@ class ExecutionRuntime:
         store: RedisRunStore,
         executor: PlanExecutor,
         allowed_namespaces: Collection[str] | None = None,
+        clock=None,
     ):
         self.store = store
         self.executor = executor
         self.allowed_namespaces = tuple(allowed_namespaces or DEFAULT_NAMESPACE_ALLOWLIST)
+        self.clock = clock or (lambda: datetime.now(UTC))
 
     def validate(self, plan: ExecutionPlan) -> PolicyDecision:
         return validate_execution_plan(
@@ -70,7 +73,12 @@ class ExecutionRuntime:
         return succeeded
 
     def _transition(self, run: ExecutionRun, status: RunStatus) -> ExecutionRun:
-        updated = run.model_copy(update={"status": status})
+        updated = run.model_copy(
+            update={
+                "status": status,
+                "updated_at": self.clock(),
+            }
+        )
         self.store.save_run(updated)
         return updated
 

@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 import pytest
 
 from devassist_core.execution_runtime import ExecutionRuntime
@@ -94,6 +96,29 @@ def test_runtime_records_running_and_succeeded_events():
         "run.succeeded",
     ]
     assert events[-1].payload == {"messages": ["patched deployment api image"]}
+
+
+def test_runtime_updates_run_timestamp_on_status_transitions():
+    store = RedisRunStore(FakeRedis())
+    executor = FakeExecutor()
+    ticks = iter(
+        [
+            datetime(2026, 6, 3, 12, 0, tzinfo=UTC),
+            datetime(2026, 6, 3, 12, 1, tzinfo=UTC),
+        ]
+    )
+    runtime = ExecutionRuntime(
+        store=store,
+        executor=executor,
+        clock=lambda: next(ticks),
+    )
+
+    run = runtime.execute(_approved_plan())
+    stored_run = store.get_run(run.run_id)
+
+    assert run.status is RunStatus.SUCCEEDED
+    assert run.updated_at == datetime(2026, 6, 3, 12, 1, tzinfo=UTC)
+    assert stored_run == run
 
 
 def test_runtime_checks_redis_and_kubernetes_dependencies():
