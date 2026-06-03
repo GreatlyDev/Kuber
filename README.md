@@ -45,6 +45,8 @@ tests/
   test_schemas.py
 scripts/
   local_demo.py
+  start-local-dev.ps1
+  stop-local-dev.ps1
 ```
 
 ## Local Setup
@@ -89,6 +91,20 @@ Start the API:
 
 ```powershell
 python -m uvicorn devassist_api.main:app --reload --port 8000
+```
+
+For the local Redis plus Kubernetes execution workflow on Windows, use the helper script from the repo root:
+
+```powershell
+.\scripts\start-local-dev.ps1
+```
+
+That script starts a named Redis container, sets `PYTHONPATH` to this checkout's `apps/api` and `packages/core` folders, enables local execution, and starts FastAPI on `http://127.0.0.1:8000`. It does not call `kubectl`; DevAssist still uses the Kubernetes Python API client.
+
+When you are done, stop the API with `Ctrl+C`. To stop the Redis container:
+
+```powershell
+.\scripts\stop-local-dev.ps1
 ```
 
 Health endpoints:
@@ -136,8 +152,10 @@ Redis is used for run state and run event streams. `RedisRunStore` stores each `
 For local development, run Redis with Docker when needed:
 
 ```powershell
-docker run --rm -p 6379:6379 redis:7
+docker run --name devassist-redis -p 6379:6379 redis:7
 ```
+
+The Windows helper at `scripts/start-local-dev.ps1` will start that container for you and reuse it on later runs. The companion `scripts/stop-local-dev.ps1` stops only the named local Redis container.
 
 The current executor is written around the official Kubernetes Python client's `AppsV1Api` method shapes. Tests use fakes, so no cluster is required in CI. For local manual testing later, Docker Desktop Kubernetes, kind, or minikube can provide the kubeconfig that `build_apps_v1_api` loads. Set `DEVASSIST_EXECUTION_ENABLED=true` only when Redis is running and your Kubernetes context is pointed at a dev cluster.
 
@@ -170,6 +188,7 @@ Implemented so far:
 - Guarded Kubernetes API executor for deploy, scale, and status plans with tests
 - Local Kubernetes demo manifest and runbook
 - Local demo API script with tests
+- Windows local developer start/stop scripts
 - README setup instructions
 
 Not implemented yet:
