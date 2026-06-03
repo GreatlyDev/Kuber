@@ -126,8 +126,24 @@ def test_get_run_returns_404_for_missing_run():
     assert response.json() == {"detail": "run 'run-missing' was not found"}
 
 
+def test_get_run_events_returns_404_for_missing_run():
+    main.execution_runtime = FakeRuntime(FakeStore())
+    client = TestClient(main.app)
+
+    response = client.get("/runs/run-missing/events")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "run 'run-missing' was not found"}
+
+
 def test_get_run_events_returns_stored_events():
     store = FakeStore()
+    store.runs["run-123"] = ExecutionRun(
+        run_id="run-123",
+        plan_id="plan-123",
+        status=RunStatus.SUCCEEDED,
+        redis_state_key=run_state_key("run-123"),
+    )
     store.events["run-123"] = [
         RunEvent(
             event_id="evt-123",

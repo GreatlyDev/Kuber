@@ -152,6 +152,8 @@ Run history is Redis-backed. `GET /runs` lists recent runs from a deterministic 
 curl "http://localhost:8000/runs?status=succeeded&limit=20"
 ```
 
+Run event inspection is tied to a stored run. `GET /runs/{run_id}/events` returns `404` when the run id is unknown instead of returning an empty timeline.
+
 Runtime wiring is controlled by environment variables:
 
 - `DEVASSIST_EXECUTION_ENABLED=false` keeps live execution disabled by default.
