@@ -87,8 +87,15 @@ The script calls DevAssist's API to create a plan, approve it, and run it. It do
 Use the printed run id to inspect the stored run and event timeline:
 
 ```powershell
+curl "http://localhost:8000/runs?limit=10"
 curl http://localhost:8000/runs/<run-id>
 curl http://localhost:8000/runs/<run-id>/events
+```
+
+Filter recent runs by status when you want a quick history view:
+
+```powershell
+curl "http://localhost:8000/runs?status=succeeded&limit=10"
 ```
 
 Inspect the deployment state through DevAssist's Kubernetes API-client path:

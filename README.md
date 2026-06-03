@@ -122,6 +122,7 @@ Plan endpoints:
 - `POST /plans/{plan_id}/reject`
 - `POST /plans/{plan_id}/runs`
 - `GET /plans/{plan_id}/policy`
+- `GET /runs`
 - `GET /runs/{run_id}`
 - `GET /runs/{run_id}/events`
 
@@ -134,6 +135,12 @@ Kubernetes execution is handled through an injected Kubernetes API client interf
 `build_apps_v1_api` creates an official Kubernetes `AppsV1Api` client. It supports local kubeconfig, in-cluster config, and an auto mode that tries in-cluster config first before falling back to kubeconfig.
 
 The run execution API requires an explicitly configured execution runtime. By default it returns `503` instead of creating a live Kubernetes client on its own. When configured, the runtime queues a run, records `run.started`, executes through the Kubernetes executor, and records `run.succeeded` or `run.failed`.
+
+Run history is Redis-backed. `GET /runs` lists recent runs from a deterministic Redis sorted-set index, newest first. Use `status` to filter by run status and `limit` to bound results:
+
+```powershell
+curl "http://localhost:8000/runs?status=succeeded&limit=20"
+```
 
 Runtime wiring is controlled by environment variables:
 
@@ -179,6 +186,7 @@ Implemented so far:
 - Read-only deployment status API with tests
 - Guarded run execution API with tests
 - Run and run event inspection API with tests
+- Recent run history API with tests
 - Opt-in local runtime wiring through Redis and Kubernetes client settings
 - Deterministic LangChain-shaped parser stub with tests
 - Execution runtime with Redis run lifecycle events and tests

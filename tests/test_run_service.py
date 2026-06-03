@@ -10,6 +10,7 @@ class FakeRedis:
     def __init__(self):
         self.hashes = {}
         self.streams = {}
+        self.sorted_sets = {}
 
     def hset(self, name, mapping):
         self.hashes[name] = dict(mapping)
@@ -26,6 +27,14 @@ class FakeRedis:
 
     def xrange(self, name):
         return self.streams.get(name, [])
+
+    def zadd(self, name, mapping):
+        sorted_set = self.sorted_sets.setdefault(name, {})
+        sorted_set.update(mapping)
+        return len(mapping)
+
+    def zrevrange(self, name, start, end):
+        return []
 
 
 def _draft_plan():
