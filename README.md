@@ -128,7 +128,7 @@ Plan endpoints:
 - `GET /runs/{run_id}`
 - `GET /runs/{run_id}/events`
 
-Plan approval is intentionally separate from execution. These endpoints can create, inspect, approve, reject, and validate an `ExecutionPlan`, but they do not run Kubernetes actions.
+Plan approval is intentionally separate from execution. These endpoints can create, inspect, approve, reject, and validate an `ExecutionPlan`, but they do not run Kubernetes actions. Rejected plans are denied by policy for every action, including read-only status checks.
 
 The MVP parser is deterministic and schema-backed. It can parse local-friendly deploy, scale, and status phrases, and it returns `400` when text cannot produce a valid `PipelineIntent` instead of inventing missing mutating inputs:
 
