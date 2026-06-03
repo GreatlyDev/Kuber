@@ -2,6 +2,7 @@ from collections.abc import Callable, Collection
 from datetime import UTC, datetime
 from typing import Protocol
 
+from kubernetes.client.exceptions import ApiException
 from pydantic import BaseModel, ConfigDict
 
 from devassist_core.policy import (
@@ -83,6 +84,8 @@ class KubernetesPlanExecutor:
                 )
             elif step.action is DeploymentAction.STATUS:
                 deployment_state = self._read_status(step, plan)
+                if deployment_state is None:
+                    messages.append(f"deployment {step.name} was not found")
             else:
                 raise UnsupportedKubernetesActionError(step.action.value)
 
@@ -127,11 +130,20 @@ class KubernetesPlanExecutor:
             body=body,
         )
 
-    def _read_status(self, step: PlanStep, plan: ExecutionPlan) -> DeploymentState:
-        deployment = self.apps_v1_api.read_namespaced_deployment(
-            name=step.name,
-            namespace=step.namespace,
-        )
+    def _read_status(
+        self,
+        step: PlanStep,
+        plan: ExecutionPlan,
+    ) -> DeploymentState | None:
+        try:
+            deployment = self.apps_v1_api.read_namespaced_deployment(
+                name=step.name,
+                namespace=step.namespace,
+            )
+        except ApiException as exc:
+            if exc.status == 404:
+                return None
+            raise
         containers = deployment.spec.template.spec.containers
         current_image = containers[0].image if containers else None
         return DeploymentState(

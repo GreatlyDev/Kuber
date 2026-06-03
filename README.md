@@ -140,7 +140,7 @@ status api in dev
 
 Run queueing is also guarded. `queue_execution_run` validates the plan policy first, then records a queued `ExecutionRun` and `run.queued` event through Redis-backed storage. It still does not execute Kubernetes actions.
 
-Kubernetes execution is handled through an injected Kubernetes API client interface. Draft mutating plans are blocked before any client method is called. Approved deploy and scale plans patch Kubernetes deployments through API-client-style methods; status plans read deployment state without approval.
+Kubernetes execution is handled through an injected Kubernetes API client interface. Draft mutating plans are blocked before any client method is called. Approved deploy and scale plans patch Kubernetes deployments through API-client-style methods; status plans read deployment state without approval and return `404` when the Kubernetes API reports that the Deployment does not exist.
 
 `build_apps_v1_api` creates an official Kubernetes `AppsV1Api` client. It supports local kubeconfig, in-cluster config, and an auto mode that tries in-cluster config first before falling back to kubeconfig.
 
