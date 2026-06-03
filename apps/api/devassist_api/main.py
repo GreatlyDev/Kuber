@@ -200,6 +200,9 @@ def get_run(run_id: str) -> ExecutionRun:
 @app.get("/runs/{run_id}/events", response_model=list[RunEvent])
 def get_run_events(run_id: str) -> list[RunEvent]:
     runtime = _require_execution_runtime()
+    run = runtime.store.get_run(run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail=f"run '{run_id}' was not found")
     return runtime.store.list_events(run_id)
 
 
