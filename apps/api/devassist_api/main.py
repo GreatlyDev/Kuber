@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Query, status
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from devassist_api.runtime import (
     RuntimeSettings,
@@ -71,7 +71,16 @@ def readyz() -> dict[str, object]:
 
 @app.post("/plans", response_model=ExecutionPlan, status_code=status.HTTP_201_CREATED)
 def create_plan(request: CreatePlanRequest) -> ExecutionPlan:
-    intent = parser.parse(request.text)
+    try:
+        intent = parser.parse(request.text)
+    except ValidationError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": "invalid pipeline intent",
+                "errors": [error["msg"] for error in exc.errors()],
+            },
+        ) from exc
     plan = build_execution_plan(intent)
     return plan_repository.save(plan)
 

@@ -24,14 +24,14 @@ class DeterministicLangChainParser:
                 action=DeploymentAction.SCALE,
                 app=_find_after(normalized, "scale") or "unknown",
                 namespace=_find_after(normalized, "in") or "dev",
-                replicas=int(replicas_match.group(1)) if replicas_match else 1,
+                replicas=int(replicas_match.group(1)) if replicas_match else None,
                 raw_text=text,
             )
 
         return PipelineIntent(
             action=DeploymentAction.STATUS,
             app=_find_after(normalized, "status") or "unknown",
-            namespace="dev",
+            namespace=_find_after(normalized, "in") or "dev",
             raw_text=text,
         )
 
