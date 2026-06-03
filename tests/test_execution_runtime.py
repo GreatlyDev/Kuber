@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from devassist_core.execution_runtime import ExecutionRuntime
+from devassist_core.execution_runtime import ExecutionRunFailedError, ExecutionRuntime
 from devassist_core.kubernetes_executor import KubernetesExecutionResult
 from devassist_core.plan_builder import build_execution_plan
 from devassist_core.policy import PolicyDecision
@@ -142,20 +142,22 @@ def test_runtime_reports_unavailable_dependency_without_raising():
     assert dependencies == {"redis": "ok", "kubernetes": "unavailable"}
 
 
-def test_runtime_records_failed_event_and_reraises_error():
+def test_runtime_records_failed_event_and_raises_run_failure():
     redis = FakeRedis()
     store = RedisRunStore(redis)
     executor = FakeExecutor(fail=True)
     runtime = ExecutionRuntime(store=store, executor=executor)
 
-    with pytest.raises(RuntimeError, match="cluster unavailable"):
+    with pytest.raises(ExecutionRunFailedError, match="cluster unavailable") as exc:
         runtime.execute(_approved_plan())
 
-    run_id = next(iter(redis.hashes)).removeprefix("devassist:runs:")
+    run_id = exc.value.run.run_id
     run = store.get_run(run_id)
     events = store.list_events(run_id)
 
     assert run.status is RunStatus.FAILED
+    assert exc.value.run == run
+    assert exc.value.error == "cluster unavailable"
     assert [event.event_type for event in events] == [
         "run.queued",
         "run.started",

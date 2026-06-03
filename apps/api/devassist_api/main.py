@@ -8,6 +8,7 @@ from devassist_api.runtime import (
     build_execution_runtime,
     load_settings,
 )
+from devassist_core.execution_runtime import ExecutionRunFailedError
 from devassist_core.langchain_parser import DeterministicLangChainParser
 from devassist_core.plan_builder import build_execution_plan
 from devassist_core.plan_repository import InMemoryPlanRepository
@@ -163,7 +164,19 @@ def run_plan(plan_id: str) -> ExecutionRun:
     if not policy.allowed:
         raise HTTPException(status_code=403, detail=policy.reasons)
 
-    return runtime.execute(plan)
+    try:
+        return runtime.execute(plan)
+    except ExecutionRunFailedError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "execution failed",
+                "run_id": exc.run.run_id,
+                "status": exc.run.status,
+                "error": exc.error,
+                "events_path": f"/runs/{exc.run.run_id}/events",
+            },
+        ) from exc
 
 
 @app.get("/runs", response_model=list[ExecutionRun])

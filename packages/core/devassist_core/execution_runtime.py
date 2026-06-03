@@ -17,6 +17,13 @@ class PlanExecutor(Protocol):
     def execute(self, plan: ExecutionPlan) -> KubernetesExecutionResult: ...
 
 
+class ExecutionRunFailedError(Exception):
+    def __init__(self, *, run: ExecutionRun, error: str):
+        self.run = run
+        self.error = error
+        super().__init__(error)
+
+
 class ExecutionRuntime:
     def __init__(
         self,
@@ -61,7 +68,7 @@ class ExecutionRuntime:
                 "Run failed",
                 payload={"error": str(exc)},
             )
-            raise
+            raise ExecutionRunFailedError(run=failed, error=str(exc)) from exc
 
         succeeded = self._transition(running, RunStatus.SUCCEEDED)
         self._append_event(

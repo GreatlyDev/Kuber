@@ -144,7 +144,7 @@ Kubernetes execution is handled through an injected Kubernetes API client interf
 
 `build_apps_v1_api` creates an official Kubernetes `AppsV1Api` client. It supports local kubeconfig, in-cluster config, and an auto mode that tries in-cluster config first before falling back to kubeconfig.
 
-The run execution API requires an explicitly configured execution runtime. By default it returns `503` instead of creating a live Kubernetes client on its own. When configured, the runtime queues a run, records `run.started`, executes through the Kubernetes executor, and records `run.succeeded` or `run.failed`.
+The run execution API requires an explicitly configured execution runtime. By default it returns `503` instead of creating a live Kubernetes client on its own. When configured, the runtime queues a run, records `run.started`, executes through the Kubernetes executor, and records `run.succeeded` or `run.failed`. Failed execution responses include the failed `run_id` and an `events_path` so the recorded event timeline remains inspectable.
 
 Run history is Redis-backed. `GET /runs` lists recent runs from a deterministic Redis sorted-set index, newest first. Use `status` to filter by run status and `limit` to bound results:
 
