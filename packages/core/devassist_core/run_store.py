@@ -21,6 +21,8 @@ class RedisClient(Protocol):
 
     def hgetall(self, name: str) -> dict[object, object]: ...
 
+    def ping(self) -> object: ...
+
     def xadd(self, name: str, fields: dict[str, str]) -> object: ...
 
     def xrange(self, name: str) -> list[tuple[object, dict[object, object]]]: ...
@@ -43,6 +45,9 @@ class RedisRunStore:
         if not raw:
             return None
         return ExecutionRun.model_validate(_hash_to_model_data(raw))
+
+    def ping(self) -> bool:
+        return bool(self.redis.ping())
 
     def list_runs(
         self,

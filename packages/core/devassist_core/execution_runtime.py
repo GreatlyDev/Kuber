@@ -33,6 +33,12 @@ class ExecutionRuntime:
             allowed_namespaces=self.allowed_namespaces,
         )
 
+    def check_dependencies(self) -> dict[str, str]:
+        return {
+            "redis": self._check_redis(),
+            "kubernetes": self._check_kubernetes(),
+        }
+
     def execute(self, plan: ExecutionPlan) -> ExecutionRun:
         run = queue_execution_run(
             plan,
@@ -84,3 +90,18 @@ class ExecutionRuntime:
                 payload=payload or {},
             )
         )
+
+    def _check_redis(self) -> str:
+        try:
+            return "ok" if self.store.ping() else "unavailable"
+        except Exception:
+            return "unavailable"
+
+    def _check_kubernetes(self) -> str:
+        check_connection = getattr(self.executor, "check_connection", None)
+        if check_connection is None:
+            return "configured"
+        try:
+            return "ok" if check_connection() else "unavailable"
+        except Exception:
+            return "unavailable"

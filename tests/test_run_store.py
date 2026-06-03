@@ -22,6 +22,9 @@ class FakeRedis:
     def hgetall(self, name):
         return self.hashes.get(name, {})
 
+    def ping(self):
+        return True
+
     def xadd(self, name, fields):
         stream = self.streams.setdefault(name, [])
         event_id = f"{len(stream) + 1}-0"
@@ -78,6 +81,13 @@ def test_saves_and_loads_execution_run_from_redis_hash():
     loaded = store.get_run("run-123")
 
     assert loaded == run
+
+
+def test_redis_run_store_pings_redis_client():
+    redis = FakeRedis()
+    store = RedisRunStore(redis)
+
+    assert store.ping() is True
 
 
 def test_saves_execution_run_to_recent_run_index():
