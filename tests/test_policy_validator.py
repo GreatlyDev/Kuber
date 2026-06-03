@@ -1,4 +1,8 @@
-from devassist_core.policy import PolicyDecision, validate_execution_plan
+from devassist_core.policy import (
+    DEFAULT_NAMESPACE_ALLOWLIST,
+    PolicyDecision,
+    validate_execution_plan,
+)
 from devassist_core.schemas import DeploymentAction, ExecutionPlan, PipelineIntent, PlanStatus, PlanStep
 
 
@@ -42,11 +46,29 @@ def test_policy_allows_approved_mutating_plan():
     assert decision.reasons == []
 
 
+def test_default_namespace_allowlist_is_local_friendly():
+    assert DEFAULT_NAMESPACE_ALLOWLIST == frozenset(
+        {"default", "dev", "local", "staging"}
+    )
+
+
+def test_policy_uses_custom_namespace_allowlist():
+    decision = validate_execution_plan(
+        _plan(status=PlanStatus.APPROVED, namespace="staging"),
+        allowed_namespaces={"dev"},
+    )
+
+    assert decision.allowed is False
+    assert "namespace 'staging' is outside the configured namespace allowlist" in (
+        decision.reasons
+    )
+
+
 def test_policy_rejects_non_local_namespace():
     decision = validate_execution_plan(_plan(status=PlanStatus.APPROVED, namespace="prod"))
 
     assert decision.allowed is False
-    assert "namespace 'prod' is outside the local MVP allowlist" in decision.reasons
+    assert "namespace 'prod' is outside the configured namespace allowlist" in decision.reasons
 
 
 def test_policy_allows_read_only_status_without_approval():

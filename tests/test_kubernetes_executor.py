@@ -45,11 +45,11 @@ class FakeDeployment:
         self.status = type("Status", (), {"available_replicas": available_replicas})()
 
 
-def _plan(action=DeploymentAction.DEPLOY, status=PlanStatus.APPROVED):
+def _plan(action=DeploymentAction.DEPLOY, status=PlanStatus.APPROVED, namespace="dev"):
     intent = PipelineIntent(
         action=action,
         app="api",
-        namespace="dev",
+        namespace=namespace,
         image="example/api:1.0.0" if action is DeploymentAction.DEPLOY else None,
         replicas=3 if action is DeploymentAction.SCALE else None,
     )
@@ -102,6 +102,20 @@ def test_approved_deploy_patches_deployment_image_with_kubernetes_client():
             },
         }
     ]
+
+
+def test_executor_blocks_namespace_outside_configured_allowlist():
+    apps_api = FakeAppsV1Api()
+    executor = KubernetesPlanExecutor(apps_api, allowed_namespaces=("dev",))
+
+    result = executor.execute(_plan(namespace="staging"))
+
+    assert result.applied is False
+    assert result.policy == PolicyDecision(
+        allowed=False,
+        reasons=["namespace 'staging' is outside the configured namespace allowlist"],
+    )
+    assert apps_api.patches == []
 
 
 def test_approved_scale_patches_deployment_scale_with_kubernetes_client():

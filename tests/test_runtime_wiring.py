@@ -43,6 +43,7 @@ def test_load_settings_defaults_to_execution_disabled():
         redis_url="redis://localhost:6379/0",
         kubernetes_config_mode=KubernetesConfigMode.AUTO,
         kubernetes_context=None,
+        allowed_namespaces=("default", "dev", "local", "staging"),
     )
 
 
@@ -53,6 +54,7 @@ def test_load_settings_reads_explicit_runtime_config():
             "REDIS_URL": "redis://redis:6379/1",
             "KUBERNETES_CONFIG_MODE": "kubeconfig",
             "KUBERNETES_CONTEXT": "docker-desktop",
+            "DEVASSIST_ALLOWED_NAMESPACES": "dev,qa",
         }
     )
 
@@ -60,6 +62,7 @@ def test_load_settings_reads_explicit_runtime_config():
     assert settings.redis_url == "redis://redis:6379/1"
     assert settings.kubernetes_config_mode is KubernetesConfigMode.KUBECONFIG
     assert settings.kubernetes_context == "docker-desktop"
+    assert settings.allowed_namespaces == ("dev", "qa")
 
 
 def test_disabled_runtime_does_not_create_clients():

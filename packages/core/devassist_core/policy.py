@@ -1,8 +1,11 @@
+from collections.abc import Collection
+
 from pydantic import BaseModel, ConfigDict
 
 from devassist_core.schemas import DeploymentAction, ExecutionPlan
 
-LOCAL_NAMESPACE_ALLOWLIST = frozenset({"default", "dev", "local", "staging"})
+DEFAULT_NAMESPACE_ALLOWLIST = frozenset({"default", "dev", "local", "staging"})
+LOCAL_NAMESPACE_ALLOWLIST = DEFAULT_NAMESPACE_ALLOWLIST
 READ_ONLY_ACTIONS = frozenset({DeploymentAction.STATUS})
 
 
@@ -13,7 +16,12 @@ class PolicyDecision(BaseModel):
     reasons: list[str]
 
 
-def validate_execution_plan(plan: ExecutionPlan) -> PolicyDecision:
+def validate_execution_plan(
+    plan: ExecutionPlan,
+    *,
+    allowed_namespaces: Collection[str] | None = None,
+) -> PolicyDecision:
+    namespace_allowlist = frozenset(allowed_namespaces or DEFAULT_NAMESPACE_ALLOWLIST)
     reasons: list[str] = []
     mutating_steps = [step for step in plan.steps if step.action not in READ_ONLY_ACTIONS]
 
@@ -21,9 +29,9 @@ def validate_execution_plan(plan: ExecutionPlan) -> PolicyDecision:
         reasons.append("mutating Kubernetes actions require an approved ExecutionPlan")
 
     for step in plan.steps:
-        if step.namespace not in LOCAL_NAMESPACE_ALLOWLIST:
+        if step.namespace not in namespace_allowlist:
             reasons.append(
-                f"namespace '{step.namespace}' is outside the local MVP allowlist"
+                f"namespace '{step.namespace}' is outside the configured namespace allowlist"
             )
 
     return PolicyDecision(allowed=not reasons, reasons=reasons)

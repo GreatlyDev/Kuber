@@ -1,3 +1,4 @@
+from collections.abc import Collection
 from uuid import uuid4
 
 from devassist_core.policy import validate_execution_plan
@@ -11,8 +12,13 @@ class PlanNotAllowedError(Exception):
         super().__init__("; ".join(reasons))
 
 
-def queue_execution_run(plan: ExecutionPlan, store: RedisRunStore) -> ExecutionRun:
-    decision = validate_execution_plan(plan)
+def queue_execution_run(
+    plan: ExecutionPlan,
+    store: RedisRunStore,
+    *,
+    allowed_namespaces: Collection[str] | None = None,
+) -> ExecutionRun:
+    decision = validate_execution_plan(plan, allowed_namespaces=allowed_namespaces)
     if not decision.allowed:
         raise PlanNotAllowedError(decision.reasons)
 

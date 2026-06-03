@@ -59,6 +59,7 @@ DEVASSIST_EXECUTION_ENABLED=true
 REDIS_URL=redis://localhost:6379/0
 KUBERNETES_CONFIG_MODE=auto
 KUBERNETES_CONTEXT=docker-desktop
+DEVASSIST_ALLOWED_NAMESPACES=dev
 ```
 
 If your current kubeconfig context already points at the right dev cluster, leave `KUBERNETES_CONTEXT` blank.
@@ -70,6 +71,7 @@ $env:DEVASSIST_EXECUTION_ENABLED="true"
 $env:REDIS_URL="redis://localhost:6379/0"
 $env:KUBERNETES_CONFIG_MODE="auto"
 $env:KUBERNETES_CONTEXT="docker-desktop"
+$env:DEVASSIST_ALLOWED_NAMESPACES="dev"
 $env:PYTHONPATH="$PWD\apps\api;$PWD\packages\core"
 python -m uvicorn devassist_api.main:app --reload --port 8000
 ```
@@ -117,3 +119,4 @@ kubectl describe deployment api -n dev
 - Mutating actions still require an approved `ExecutionPlan`.
 - DevAssist does not shell out to `kubectl`; manual `kubectl` commands are for setup and inspection only.
 - Keep `DEVASSIST_EXECUTION_ENABLED=false` unless Redis is running and your kubeconfig points at the intended dev cluster.
+- Keep `DEVASSIST_ALLOWED_NAMESPACES=dev` for the demo. Add namespaces only when you have created them intentionally in your local cluster.

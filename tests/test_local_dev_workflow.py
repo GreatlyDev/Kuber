@@ -23,6 +23,7 @@ def test_env_example_documents_safe_local_defaults() -> None:
     assert "REDIS_URL=redis://localhost:6379/0" in env_example
     assert "KUBERNETES_CONFIG_MODE=auto" in env_example
     assert "KUBERNETES_CONTEXT=" in env_example
+    assert "DEVASSIST_ALLOWED_NAMESPACES=dev" in env_example
 
 
 def test_start_local_dev_script_wires_expected_local_runtime() -> None:
@@ -34,6 +35,7 @@ def test_start_local_dev_script_wires_expected_local_runtime() -> None:
     assert "REDIS_URL" in script
     assert "KUBERNETES_CONFIG_MODE" in script
     assert "KUBERNETES_CONTEXT" in script
+    assert "DEVASSIST_ALLOWED_NAMESPACES" in script
     assert "apps/api" in script.replace("\\", "/")
     assert "packages/core" in script.replace("\\", "/")
     assert "devassist-redis" in script
