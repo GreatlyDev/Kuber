@@ -1,10 +1,27 @@
 from fastapi.testclient import TestClient
 
+from devassist_api import main
 from devassist_api.main import app, plan_repository
+from devassist_core.policy import PolicyDecision
 
 
 def setup_function():
     plan_repository.clear()
+    main.execution_runtime = None
+
+
+def teardown_function():
+    main.execution_runtime = None
+
+
+class FakePolicyRuntime:
+    def __init__(self, decision):
+        self.decision = decision
+        self.validated_plan_ids = []
+
+    def validate(self, plan):
+        self.validated_plan_ids.append(plan.plan_id)
+        return self.decision
 
 
 def test_creates_draft_plan_from_text_without_executing():
@@ -69,6 +86,34 @@ def test_policy_rejects_draft_mutating_plan():
         "allowed": False,
         "reasons": ["mutating Kubernetes actions require an approved ExecutionPlan"],
     }
+
+
+def test_policy_endpoint_uses_runtime_policy_when_configured():
+    runtime = FakePolicyRuntime(
+        PolicyDecision(
+            allowed=False,
+            reasons=["namespace 'staging' is outside the configured namespace allowlist"],
+        )
+    )
+    main.execution_runtime = runtime
+    client = TestClient(app)
+    created = client.post(
+        "/plans",
+        json={"text": "deploy api to staging with image example/api:1.0.0"},
+    ).json()
+    client.post(
+        f"/plans/{created['plan_id']}/approve",
+        json={"approved_by": "great"},
+    )
+
+    response = client.get(f"/plans/{created['plan_id']}/policy")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "allowed": False,
+        "reasons": ["namespace 'staging' is outside the configured namespace allowlist"],
+    }
+    assert runtime.validated_plan_ids == [created["plan_id"]]
 
 
 def test_rejects_plan():

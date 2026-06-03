@@ -106,7 +106,7 @@ def reject_plan(plan_id: str) -> ExecutionPlan:
 
 @app.get("/plans/{plan_id}/policy", response_model=PolicyDecision)
 def get_plan_policy(plan_id: str) -> PolicyDecision:
-    return validate_execution_plan(_load_plan(plan_id))
+    return _validate_plan_policy(_load_plan(plan_id))
 
 
 @app.get("/deployments/{namespace}/{app_name}/state", response_model=DeploymentState)
@@ -138,10 +138,7 @@ def get_deployment_state(namespace: str, app_name: str) -> DeploymentState:
 def run_plan(plan_id: str) -> ExecutionRun:
     plan = _load_plan(plan_id)
     runtime = _require_execution_runtime()
-    if hasattr(runtime, "validate"):
-        policy = runtime.validate(plan)
-    else:
-        policy = validate_execution_plan(plan)
+    policy = _validate_plan_policy(plan)
     if not policy.allowed:
         raise HTTPException(status_code=403, detail=policy.reasons)
 
@@ -190,6 +187,12 @@ def _require_execution_runtime():
             detail="execution runtime is not configured",
         )
     return execution_runtime
+
+
+def _validate_plan_policy(plan: ExecutionPlan) -> PolicyDecision:
+    if execution_runtime is not None and hasattr(execution_runtime, "validate"):
+        return execution_runtime.validate(plan)
+    return validate_execution_plan(plan)
 
 
 def configure_execution_runtime(

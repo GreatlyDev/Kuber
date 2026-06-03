@@ -152,6 +152,8 @@ Runtime wiring is controlled by environment variables:
 
 Namespace allowlisting is enforced by the deterministic policy validator before run queueing and by the Kubernetes executor before API-client calls. Keep the local helper narrowed to `dev` unless you intentionally add another local namespace for practice.
 
+`GET /plans/{plan_id}/policy` uses the configured runtime policy when execution is enabled, so policy preview and run execution enforce the same namespace allowlist.
+
 ## Local Dependencies
 
 Redis is used for run state and run event streams. `RedisRunStore` stores each `ExecutionRun` in a Redis hash and each `RunEvent` in a Redis stream using deterministic keys:
