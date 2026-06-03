@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict, Field
 
 from devassist_api.runtime import (
@@ -19,6 +19,7 @@ from devassist_core.schemas import (
     ExecutionRun,
     PipelineIntent,
     RunEvent,
+    RunStatus,
 )
 
 
@@ -141,6 +142,15 @@ def run_plan(plan_id: str) -> ExecutionRun:
         raise HTTPException(status_code=403, detail=policy.reasons)
 
     return _require_execution_runtime().execute(plan)
+
+
+@app.get("/runs", response_model=list[ExecutionRun])
+def list_runs(
+    run_status: RunStatus | None = Query(default=None, alias="status"),
+    limit: int = Query(default=50, ge=1, le=100),
+) -> list[ExecutionRun]:
+    runtime = _require_execution_runtime()
+    return runtime.store.list_runs(status=run_status, limit=limit)
 
 
 @app.get("/runs/{run_id}", response_model=ExecutionRun)
