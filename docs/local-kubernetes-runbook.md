@@ -130,6 +130,8 @@ Inspect the deployment state through DevAssist's Kubernetes API-client path:
 curl http://localhost:8000/deployments/dev/api/state
 ```
 
+If the Deployment does not exist, DevAssist returns `404` from this endpoint instead of treating the Kubernetes client response as an unhandled server error.
+
 After the run finishes, inspect Kubernetes manually:
 
 ```powershell

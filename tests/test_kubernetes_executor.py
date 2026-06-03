@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 
 import pytest
+from kubernetes.client.exceptions import ApiException
 
 from devassist_core.kubernetes_executor import (
     KubernetesExecutionResult,
@@ -22,6 +23,7 @@ class FakeAppsV1Api:
         self.patches = []
         self.scales = []
         self.deployments = {}
+        self.missing_deployments = set()
         self.resource_checks = 0
 
     def patch_namespaced_deployment(self, name, namespace, body):
@@ -33,6 +35,8 @@ class FakeAppsV1Api:
         return {"scaled": True}
 
     def read_namespaced_deployment(self, name, namespace):
+        if (namespace, name) in self.missing_deployments:
+            raise ApiException(status=404, reason="Not Found")
         return self.deployments[(namespace, name)]
 
     def get_api_resources(self):
@@ -168,6 +172,19 @@ def test_status_reads_deployment_state_without_approval():
         available_replicas=1,
         observed_at=datetime(2026, 5, 29, tzinfo=UTC),
     )
+
+
+def test_status_returns_no_state_when_deployment_is_missing():
+    apps_api = FakeAppsV1Api()
+    apps_api.missing_deployments.add(("dev", "api"))
+    executor = KubernetesPlanExecutor(apps_api)
+
+    result = executor.execute(_plan(action=DeploymentAction.STATUS, status=PlanStatus.DRAFT))
+
+    assert result.applied is False
+    assert result.policy == PolicyDecision(allowed=True, reasons=[])
+    assert result.deployment_state is None
+    assert result.messages == ["deployment api was not found"]
 
 
 def test_unsupported_action_fails_before_kubernetes_call():
