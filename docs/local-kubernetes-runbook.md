@@ -82,6 +82,14 @@ python -m uvicorn devassist_api.main:app --reload --port 8000
 
 The `PYTHONPATH` line keeps Python pinned to this checkout. That is useful if you have worked from another local clone before.
 
+Check runtime readiness after startup:
+
+```powershell
+curl http://localhost:8000/readyz
+```
+
+When execution is enabled, readiness pings Redis and checks the Kubernetes Apps API using the Python client.
+
 In a second PowerShell window, run the local demo flow:
 
 ```powershell

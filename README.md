@@ -112,6 +112,8 @@ Health endpoints:
 - `GET /healthz`
 - `GET /readyz`
 
+`/readyz` reports `not_configured` dependencies when live execution is disabled. When the runtime is enabled, it pings Redis and performs a read-only Kubernetes Apps API resource check; unavailable dependencies return `503`.
+
 Plan endpoints:
 
 - `GET /deployments/{namespace}/{app_name}/state`
@@ -197,6 +199,7 @@ Implemented so far:
 - Execution plan builder with tests
 - In-memory plan repository and approval API with tests
 - Read-only deployment status API with tests
+- Runtime readiness checks for Redis and Kubernetes with tests
 - Guarded run execution API with tests
 - Run and run event inspection API with tests
 - Recent run history API with tests

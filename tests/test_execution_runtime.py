@@ -22,6 +22,9 @@ class FakeRedis:
     def hgetall(self, name):
         return self.hashes.get(name, {})
 
+    def ping(self):
+        return True
+
     def xadd(self, name, fields):
         stream = self.streams.setdefault(name, [])
         stream_id = f"{len(stream) + 1}-0"
@@ -44,6 +47,7 @@ class FakeExecutor:
     def __init__(self, *, fail=False):
         self.fail = fail
         self.executed_plan_ids = []
+        self.connection_checks = 0
 
     def execute(self, plan):
         self.executed_plan_ids.append(plan.plan_id)
@@ -54,6 +58,12 @@ class FakeExecutor:
             policy=PolicyDecision(allowed=True, reasons=[]),
             messages=["patched deployment api image"],
         )
+
+    def check_connection(self):
+        self.connection_checks += 1
+        if self.fail:
+            raise RuntimeError("cluster unavailable")
+        return True
 
 
 def _approved_plan(namespace="dev"):
@@ -84,6 +94,27 @@ def test_runtime_records_running_and_succeeded_events():
         "run.succeeded",
     ]
     assert events[-1].payload == {"messages": ["patched deployment api image"]}
+
+
+def test_runtime_checks_redis_and_kubernetes_dependencies():
+    store = RedisRunStore(FakeRedis())
+    executor = FakeExecutor()
+    runtime = ExecutionRuntime(store=store, executor=executor)
+
+    dependencies = runtime.check_dependencies()
+
+    assert dependencies == {"redis": "ok", "kubernetes": "ok"}
+    assert executor.connection_checks == 1
+
+
+def test_runtime_reports_unavailable_dependency_without_raising():
+    store = RedisRunStore(FakeRedis())
+    executor = FakeExecutor(fail=True)
+    runtime = ExecutionRuntime(store=store, executor=executor)
+
+    dependencies = runtime.check_dependencies()
+
+    assert dependencies == {"redis": "ok", "kubernetes": "unavailable"}
 
 
 def test_runtime_records_failed_event_and_reraises_error():

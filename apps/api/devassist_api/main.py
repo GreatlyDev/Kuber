@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Query, status
+from fastapi import FastAPI, HTTPException, Query, Response, status
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from devassist_api.runtime import (
@@ -58,14 +58,26 @@ def healthz() -> dict[str, str]:
 
 
 @app.get("/readyz")
-def readyz() -> dict[str, object]:
-    runtime_status = "configured" if execution_runtime is not None else "not_configured"
-    return {
-        "status": "ready",
-        "dependencies": {
+def readyz(response: Response) -> dict[str, object]:
+    if execution_runtime is not None and hasattr(
+        execution_runtime,
+        "check_dependencies",
+    ):
+        dependencies = execution_runtime.check_dependencies()
+    else:
+        runtime_status = "configured" if execution_runtime is not None else "not_configured"
+        dependencies = {
             "kubernetes": runtime_status,
             "redis": runtime_status,
-        },
+        }
+
+    is_ready = all(value != "unavailable" for value in dependencies.values())
+    if not is_ready:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+
+    return {
+        "status": "ready" if is_ready else "not_ready",
+        "dependencies": dependencies,
     }
 
 

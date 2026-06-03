@@ -93,6 +93,10 @@ class KubernetesPlanExecutor:
             messages=messages,
         )
 
+    def check_connection(self) -> bool:
+        self.apps_v1_api.get_api_resources()
+        return True
+
     def _deploy(self, step: PlanStep) -> None:
         image = step.params["image"]
         body = {

@@ -22,6 +22,7 @@ class FakeAppsV1Api:
         self.patches = []
         self.scales = []
         self.deployments = {}
+        self.resource_checks = 0
 
     def patch_namespaced_deployment(self, name, namespace, body):
         self.patches.append({"name": name, "namespace": namespace, "body": body})
@@ -33,6 +34,10 @@ class FakeAppsV1Api:
 
     def read_namespaced_deployment(self, name, namespace):
         return self.deployments[(namespace, name)]
+
+    def get_api_resources(self):
+        self.resource_checks += 1
+        return {"resources": []}
 
 
 class FakeDeployment:
@@ -102,6 +107,14 @@ def test_approved_deploy_patches_deployment_image_with_kubernetes_client():
             },
         }
     ]
+
+
+def test_executor_connection_check_reads_apps_api_resources():
+    apps_api = FakeAppsV1Api()
+    executor = KubernetesPlanExecutor(apps_api)
+
+    assert executor.check_connection() is True
+    assert apps_api.resource_checks == 1
 
 
 def test_executor_blocks_namespace_outside_configured_allowlist():
