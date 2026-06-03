@@ -40,6 +40,23 @@ def test_creates_draft_plan_from_text_without_executing():
     assert body["intent"]["raw_text"] == "deploy api to dev with image example/api:1.0.0"
 
 
+def test_create_plan_returns_400_for_invalid_intent():
+    client = TestClient(app, raise_server_exceptions=False)
+
+    response = client.post(
+        "/plans",
+        json={"text": "deploy api to dev"},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": {
+            "message": "invalid pipeline intent",
+            "errors": ["Value error, image is required for deploy intents"],
+        }
+    }
+
+
 def test_gets_created_plan():
     client = TestClient(app)
     created = client.post(

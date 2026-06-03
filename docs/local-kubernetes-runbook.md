@@ -28,7 +28,11 @@ The demo app is named `api` in namespace `dev` so it matches DevAssist's determi
 
 ```text
 deploy api to dev with image hashicorp/http-echo:1.0
+scale api in dev to 1 replica
+status api in dev
 ```
+
+Mutating parser inputs must include the required fields. For example, `scale api in dev` is rejected because DevAssist will not invent a replica count.
 
 ## Run Redis
 

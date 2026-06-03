@@ -128,6 +128,14 @@ Plan endpoints:
 
 Plan approval is intentionally separate from execution. These endpoints can create, inspect, approve, reject, and validate an `ExecutionPlan`, but they do not run Kubernetes actions.
 
+The MVP parser is deterministic and schema-backed. It can parse local-friendly deploy, scale, and status phrases, and it returns `400` when text cannot produce a valid `PipelineIntent` instead of inventing missing mutating inputs:
+
+```text
+deploy api to dev with image example/api:1.0.0
+scale api in dev to 3 replicas
+status api in dev
+```
+
 Run queueing is also guarded. `queue_execution_run` validates the plan policy first, then records a queued `ExecutionRun` and `run.queued` event through Redis-backed storage. It still does not execute Kubernetes actions.
 
 Kubernetes execution is handled through an injected Kubernetes API client interface. Draft mutating plans are blocked before any client method is called. Approved deploy and scale plans patch Kubernetes deployments through API-client-style methods; status plans read deployment state without approval.
