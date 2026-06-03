@@ -32,8 +32,22 @@ deploy api to dev with image hashicorp/http-echo:1.0
 
 ## Run Redis
 
+The easiest Windows local path is to let the helper script at `scripts/start-local-dev.ps1` start Redis and the API together:
+
 ```powershell
-docker run --rm -p 6379:6379 redis:7
+.\scripts\start-local-dev.ps1
+```
+
+Stop the API with `Ctrl+C`. Stop the local Redis container with `scripts/stop-local-dev.ps1` when you are done:
+
+```powershell
+.\scripts\stop-local-dev.ps1
+```
+
+If you want to run Redis manually instead:
+
+```powershell
+docker run --name devassist-redis -p 6379:6379 redis:7
 ```
 
 ## Enable DevAssist Runtime
@@ -56,8 +70,11 @@ $env:DEVASSIST_EXECUTION_ENABLED="true"
 $env:REDIS_URL="redis://localhost:6379/0"
 $env:KUBERNETES_CONFIG_MODE="auto"
 $env:KUBERNETES_CONTEXT="docker-desktop"
+$env:PYTHONPATH="$PWD\apps\api;$PWD\packages\core"
 python -m uvicorn devassist_api.main:app --reload --port 8000
 ```
+
+The `PYTHONPATH` line keeps Python pinned to this checkout. That is useful if you have worked from another local clone before.
 
 In a second PowerShell window, run the local demo flow:
 
