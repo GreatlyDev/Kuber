@@ -86,6 +86,14 @@ python scripts/local_demo.py
 
 The script calls DevAssist's API to create a plan, approve it, and run it. It does not call `kubectl`.
 
+Before running a plan, you can preview the deterministic policy decision:
+
+```powershell
+curl http://localhost:8000/plans/<plan-id>/policy
+```
+
+When the runtime is enabled, this preview uses the same namespace allowlist that execution uses.
+
 Use the printed run id to inspect the stored run and event timeline:
 
 ```powershell
