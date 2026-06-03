@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from devassist_api import main
+from devassist_core.execution_runtime import ExecutionRunFailedError
 from devassist_core.policy import PolicyDecision
 from devassist_core.run_store import run_state_key
 from devassist_core.schemas import ExecutionRun, RunStatus
@@ -27,6 +28,18 @@ class FakePolicyRuntime(FakeExecutionRuntime):
 
     def validate(self, plan):
         return self.decision
+
+
+class FakeFailingRuntime(FakeExecutionRuntime):
+    def execute(self, plan):
+        self.executed_plan_ids.append(plan.plan_id)
+        run = ExecutionRun(
+            run_id="run-failed",
+            plan_id=plan.plan_id,
+            status=RunStatus.FAILED,
+            redis_state_key=run_state_key("run-failed"),
+        )
+        raise ExecutionRunFailedError(run=run, error="cluster unavailable")
 
 
 def setup_function():
@@ -69,6 +82,34 @@ def test_execution_endpoint_runs_approved_plan_with_runtime():
     assert response.status_code == 201
     assert response.json()["status"] == "succeeded"
     assert response.json()["plan_id"] == created["plan_id"]
+    assert runtime.executed_plan_ids == [created["plan_id"]]
+
+
+def test_execution_endpoint_returns_failed_run_details_when_execution_fails():
+    runtime = FakeFailingRuntime()
+    main.execution_runtime = runtime
+    client = TestClient(main.app)
+    created = client.post(
+        "/plans",
+        json={"text": "deploy api to dev with image example/api:1.0.0"},
+    ).json()
+    client.post(
+        f"/plans/{created['plan_id']}/approve",
+        json={"approved_by": "great"},
+    )
+
+    response = client.post(f"/plans/{created['plan_id']}/runs")
+
+    assert response.status_code == 500
+    assert response.json() == {
+        "detail": {
+            "message": "execution failed",
+            "run_id": "run-failed",
+            "status": "failed",
+            "error": "cluster unavailable",
+            "events_path": "/runs/run-failed/events",
+        }
+    }
     assert runtime.executed_plan_ids == [created["plan_id"]]
 
 

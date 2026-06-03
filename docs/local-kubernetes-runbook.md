@@ -114,6 +114,8 @@ curl http://localhost:8000/runs/<run-id>
 curl http://localhost:8000/runs/<run-id>/events
 ```
 
+If execution fails, the API response includes a failed `run_id` and `events_path`. Use those values with the same run inspection endpoints to see the stored `run.failed` event.
+
 Filter recent runs by status when you want a quick history view:
 
 ```powershell
