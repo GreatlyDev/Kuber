@@ -46,8 +46,9 @@ class FakeRedis:
 
 
 class FakeExecutor:
-    def __init__(self, *, fail=False):
+    def __init__(self, *, fail=False, policy=None):
         self.fail = fail
+        self.policy = policy or PolicyDecision(allowed=True, reasons=[])
         self.executed_plan_ids = []
         self.connection_checks = 0
 
@@ -57,7 +58,7 @@ class FakeExecutor:
             raise RuntimeError("cluster unavailable")
         return KubernetesExecutionResult(
             applied=True,
-            policy=PolicyDecision(allowed=True, reasons=[]),
+            policy=self.policy,
             messages=["patched deployment api image"],
         )
 
@@ -164,6 +165,41 @@ def test_runtime_records_failed_event_and_raises_run_failure():
         "run.failed",
     ]
     assert events[-1].payload == {"error": "cluster unavailable"}
+
+
+def test_runtime_records_failed_event_when_executor_policy_denies_plan():
+    store = RedisRunStore(FakeRedis())
+    executor = FakeExecutor(
+        policy=PolicyDecision(
+            allowed=False,
+            reasons=["namespace 'staging' is outside the configured namespace allowlist"],
+        )
+    )
+    runtime = ExecutionRuntime(store=store, executor=executor)
+
+    with pytest.raises(ExecutionRunFailedError) as exc:
+        runtime.execute(_approved_plan())
+
+    run_id = exc.value.run.run_id
+    run = store.get_run(run_id)
+    events = store.list_events(run_id)
+
+    assert run.status is RunStatus.FAILED
+    assert exc.value.run == run
+    assert exc.value.error == (
+        "namespace 'staging' is outside the configured namespace allowlist"
+    )
+    assert [event.event_type for event in events] == [
+        "run.queued",
+        "run.started",
+        "run.failed",
+    ]
+    assert events[-1].payload == {
+        "error": "namespace 'staging' is outside the configured namespace allowlist",
+        "policy_reasons": [
+            "namespace 'staging' is outside the configured namespace allowlist"
+        ],
+    }
 
 
 def test_runtime_rejects_plan_outside_allowed_namespaces_before_executor_call():

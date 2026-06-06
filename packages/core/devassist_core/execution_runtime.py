@@ -61,14 +61,17 @@ class ExecutionRuntime:
         try:
             result = self.executor.execute(plan)
         except Exception as exc:
-            failed = self._transition(running, RunStatus.FAILED)
-            self._append_event(
-                failed,
-                "run.failed",
-                "Run failed",
-                payload={"error": str(exc)},
-            )
+            failed = self._fail_run(running, str(exc))
             raise ExecutionRunFailedError(run=failed, error=str(exc)) from exc
+
+        if not result.policy.allowed:
+            error = "; ".join(result.policy.reasons) or "executor policy denied execution"
+            failed = self._fail_run(
+                running,
+                error,
+                payload={"policy_reasons": result.policy.reasons},
+            )
+            raise ExecutionRunFailedError(run=failed, error=error)
 
         succeeded = self._transition(running, RunStatus.SUCCEEDED)
         self._append_event(
@@ -88,6 +91,23 @@ class ExecutionRuntime:
         )
         self.store.save_run(updated)
         return updated
+
+    def _fail_run(
+        self,
+        run: ExecutionRun,
+        error: str,
+        payload: dict[str, object] | None = None,
+    ) -> ExecutionRun:
+        failed = self._transition(run, RunStatus.FAILED)
+        event_payload = {"error": error}
+        event_payload.update(payload or {})
+        self._append_event(
+            failed,
+            "run.failed",
+            "Run failed",
+            payload=event_payload,
+        )
+        return failed
 
     def _append_event(
         self,
