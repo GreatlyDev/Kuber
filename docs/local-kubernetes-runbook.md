@@ -114,7 +114,7 @@ curl http://localhost:8000/runs/<run-id>
 curl http://localhost:8000/runs/<run-id>/events
 ```
 
-If execution fails, the API response includes a failed `run_id` and `events_path`. Use those values with the same run inspection endpoints to see the stored `run.failed` event.
+If execution fails, the API response includes a failed `run_id` and `events_path`. Use those values with the same run inspection endpoints to see the stored `run.failed` event. Executor policy denial is also recorded as a failed run.
 
 If a run id is unknown, both the run detail and event timeline endpoints return `404`.
 
