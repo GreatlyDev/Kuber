@@ -221,4 +221,4 @@ Not implemented yet:
 
 - Real LangChain model calls
 - Approval UI/API
-- Production deployment manifests
+- Production deployment manifest
