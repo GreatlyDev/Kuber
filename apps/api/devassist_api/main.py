@@ -122,6 +122,8 @@ def approve_plan(plan_id: str, request: ApprovePlanRequest) -> ExecutionPlan:
 def reject_plan(plan_id: str) -> ExecutionPlan:
     try:
         return plan_repository.reject(plan_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except KeyError as exc:
         raise _not_found(plan_id) from exc
 

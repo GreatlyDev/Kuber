@@ -144,3 +144,37 @@ def test_rejects_plan():
 
     assert response.status_code == 200
     assert response.json()["status"] == "rejected"
+
+
+def test_approve_rejected_plan_returns_400():
+    client = TestClient(app)
+    created = client.post(
+        "/plans",
+        json={"text": "deploy api to dev with image example/api:1.0.0"},
+    ).json()
+    client.post(f"/plans/{created['plan_id']}/reject")
+
+    response = client.post(
+        f"/plans/{created['plan_id']}/approve",
+        json={"approved_by": "great"},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "only draft ExecutionPlans can be approved"}
+
+
+def test_reject_approved_plan_returns_400():
+    client = TestClient(app)
+    created = client.post(
+        "/plans",
+        json={"text": "deploy api to dev with image example/api:1.0.0"},
+    ).json()
+    client.post(
+        f"/plans/{created['plan_id']}/approve",
+        json={"approved_by": "great"},
+    )
+
+    response = client.post(f"/plans/{created['plan_id']}/reject")
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "only draft ExecutionPlans can be rejected"}
