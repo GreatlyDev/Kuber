@@ -20,7 +20,7 @@ class InMemoryPlanRepository:
         if not approved_by:
             raise ValueError("approved_by is required")
 
-        plan = self._require_plan(plan_id)
+        plan = self._require_draft_plan(plan_id, transition="approved")
         approved = plan.model_copy(
             update={
                 "status": PlanStatus.APPROVED,
@@ -31,7 +31,7 @@ class InMemoryPlanRepository:
         return approved
 
     def reject(self, plan_id: str) -> ExecutionPlan:
-        plan = self._require_plan(plan_id)
+        plan = self._require_draft_plan(plan_id, transition="rejected")
         rejected = plan.model_copy(
             update={
                 "status": PlanStatus.REJECTED,
@@ -48,4 +48,10 @@ class InMemoryPlanRepository:
         plan = self.get(plan_id)
         if plan is None:
             raise KeyError(plan_id)
+        return plan
+
+    def _require_draft_plan(self, plan_id: str, *, transition: str) -> ExecutionPlan:
+        plan = self._require_plan(plan_id)
+        if plan.status is not PlanStatus.DRAFT:
+            raise ValueError(f"only draft ExecutionPlans can be {transition}")
         return plan

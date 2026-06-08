@@ -1,3 +1,5 @@
+import pytest
+
 from devassist_core.plan_builder import build_execution_plan
 from devassist_core.plan_repository import InMemoryPlanRepository
 from devassist_core.schemas import DeploymentAction, PipelineIntent, PlanStatus
@@ -53,3 +55,25 @@ def test_rejects_plan():
 
     assert rejected.status is PlanStatus.REJECTED
     assert rejected.approved_by is None
+
+
+def test_cannot_approve_rejected_plan():
+    repository = InMemoryPlanRepository()
+    plan = repository.save(_plan())
+    repository.reject(plan.plan_id)
+
+    with pytest.raises(ValueError, match="only draft ExecutionPlans can be approved"):
+        repository.approve(plan.plan_id, approved_by="great")
+
+    assert repository.get(plan.plan_id).status is PlanStatus.REJECTED
+
+
+def test_cannot_reject_approved_plan():
+    repository = InMemoryPlanRepository()
+    plan = repository.save(_plan())
+    repository.approve(plan.plan_id, approved_by="great")
+
+    with pytest.raises(ValueError, match="only draft ExecutionPlans can be rejected"):
+        repository.reject(plan.plan_id)
+
+    assert repository.get(plan.plan_id).status is PlanStatus.APPROVED
