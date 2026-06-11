@@ -52,6 +52,7 @@ def test_execution_plan_defaults_to_unapproved_draft():
     assert plan.status is PlanStatus.DRAFT
     assert plan.approved is False
     assert plan.requires_approval is True
+    assert plan.updated_at >= plan.created_at
 
 
 def test_run_models_include_redis_keys_for_state_and_events():

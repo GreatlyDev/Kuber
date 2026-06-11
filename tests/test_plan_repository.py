@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 import pytest
 
 from devassist_core.plan_builder import build_execution_plan
@@ -35,6 +37,17 @@ def test_approves_plan_with_named_approver():
     assert approved.approved_by == "great"
 
 
+def test_approve_updates_plan_timestamp():
+    decided_at = datetime(2026, 6, 8, 12, 30, tzinfo=UTC)
+    repository = InMemoryPlanRepository(clock=lambda: decided_at)
+    plan = repository.save(_plan())
+
+    approved = repository.approve(plan.plan_id, approved_by="great")
+
+    assert approved.updated_at == decided_at
+    assert repository.get(plan.plan_id).updated_at == decided_at
+
+
 def test_rejects_plan_without_approver_name():
     repository = InMemoryPlanRepository()
     plan = repository.save(_plan())
@@ -55,6 +68,17 @@ def test_rejects_plan():
 
     assert rejected.status is PlanStatus.REJECTED
     assert rejected.approved_by is None
+
+
+def test_reject_updates_plan_timestamp():
+    decided_at = datetime(2026, 6, 8, 13, 45, tzinfo=UTC)
+    repository = InMemoryPlanRepository(clock=lambda: decided_at)
+    plan = repository.save(_plan())
+
+    rejected = repository.reject(plan.plan_id)
+
+    assert rejected.updated_at == decided_at
+    assert repository.get(plan.plan_id).updated_at == decided_at
 
 
 def test_cannot_approve_rejected_plan():

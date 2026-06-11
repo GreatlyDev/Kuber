@@ -1,9 +1,12 @@
+from datetime import UTC, datetime
+
 from devassist_core.schemas import ExecutionPlan, PlanStatus
 
 
 class InMemoryPlanRepository:
-    def __init__(self):
+    def __init__(self, clock=None):
         self._plans: dict[str, ExecutionPlan] = {}
+        self.clock = clock or (lambda: datetime.now(UTC))
 
     def save(self, plan: ExecutionPlan) -> ExecutionPlan:
         self._plans[plan.plan_id] = plan
@@ -25,6 +28,7 @@ class InMemoryPlanRepository:
             update={
                 "status": PlanStatus.APPROVED,
                 "approved_by": approved_by,
+                "updated_at": self.clock(),
             }
         )
         self._plans[plan_id] = approved
@@ -36,6 +40,7 @@ class InMemoryPlanRepository:
             update={
                 "status": PlanStatus.REJECTED,
                 "approved_by": None,
+                "updated_at": self.clock(),
             }
         )
         self._plans[plan_id] = rejected

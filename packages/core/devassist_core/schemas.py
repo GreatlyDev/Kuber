@@ -79,6 +79,7 @@ class ExecutionPlan(StrictModel):
     requires_approval: bool = True
     approved_by: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @computed_field
     @property

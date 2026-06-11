@@ -38,6 +38,7 @@ def test_creates_draft_plan_from_text_without_executing():
     assert body["approved"] is False
     assert body["summary"] == "Deploy api in namespace dev"
     assert body["intent"]["raw_text"] == "deploy api to dev with image example/api:1.0.0"
+    assert "updated_at" in body
 
 
 def test_create_plan_returns_400_for_invalid_intent():
