@@ -143,6 +143,7 @@ kubectl describe deployment api -n dev
 
 - Use only a local/dev cluster for this MVP.
 - Only draft `ExecutionPlan` records can be approved or rejected.
+- Inspect `created_at` and `updated_at` on plan responses when you want to see when a plan was created or decided.
 - Mutating actions still require an approved `ExecutionPlan`.
 - Rejected `ExecutionPlan` records cannot be run, even for read-only status checks.
 - DevAssist does not shell out to `kubectl`; manual `kubectl` commands are for setup and inspection only.
