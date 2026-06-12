@@ -184,10 +184,19 @@ def run_plan(plan_id: str) -> ExecutionRun:
 @app.get("/runs", response_model=list[ExecutionRun])
 def list_runs(
     run_status: RunStatus | None = Query(default=None, alias="status"),
+    action: DeploymentAction | None = Query(default=None),
+    app_name: str | None = Query(default=None, alias="app"),
+    namespace: str | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=100),
 ) -> list[ExecutionRun]:
     runtime = _require_execution_runtime()
-    return runtime.store.list_runs(status=run_status, limit=limit)
+    return runtime.store.list_runs(
+        status=run_status,
+        action=action,
+        app=app_name,
+        namespace=namespace,
+        limit=limit,
+    )
 
 
 @app.get("/runs/{run_id}", response_model=ExecutionRun)
