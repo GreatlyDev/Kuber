@@ -71,6 +71,7 @@ def test_approved_plan_is_queued_and_recorded_in_redis():
 
     assert run.status is RunStatus.QUEUED
     assert run.plan_id == approved_plan.plan_id
+    assert run.plan_summary == approved_plan.summary
     assert run.redis_state_key == run_state_key(run.run_id)
     assert loaded_run == run
     assert len(events) == 1

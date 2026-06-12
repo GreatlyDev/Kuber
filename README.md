@@ -146,7 +146,7 @@ Kubernetes execution is handled through an injected Kubernetes API client interf
 
 The run execution API requires an explicitly configured execution runtime. By default it returns `503` instead of creating a live Kubernetes client on its own. When configured, the runtime queues a run, records `run.started`, executes through the Kubernetes executor, and records `run.succeeded` or `run.failed`. Executor policy denial is recorded as `run.failed` rather than success. Failed execution responses include the failed `run_id` and an `events_path` so the recorded event timeline remains inspectable.
 
-Run history is Redis-backed. `GET /runs` lists recent runs from a deterministic Redis sorted-set index, newest first. Use `status` to filter by run status and `limit` to bound results:
+Run history is Redis-backed. `GET /runs` lists recent runs from a deterministic Redis sorted-set index, newest first. Runs include the originating plan summary so history remains readable while the MVP plan repository is still in-memory. Use `status` to filter by run status and `limit` to bound results:
 
 ```powershell
 curl "http://localhost:8000/runs?status=succeeded&limit=20"
