@@ -97,6 +97,9 @@ class ExecutionRun(StrictModel):
     run_id: str = Field(default_factory=lambda: f"run-{uuid4().hex}")
     plan_id: str
     plan_summary: str | None = None
+    plan_action: DeploymentAction | None = None
+    plan_app: str | None = Field(default=None, pattern=KUBERNETES_NAME_PATTERN)
+    plan_namespace: str | None = Field(default=None, pattern=KUBERNETES_NAME_PATTERN)
     status: RunStatus
     redis_state_key: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

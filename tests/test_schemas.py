@@ -61,6 +61,9 @@ def test_run_models_include_redis_keys_for_state_and_events():
     run = ExecutionRun(
         plan_id="plan-123",
         plan_summary="Deploy api in namespace dev",
+        plan_action=DeploymentAction.DEPLOY,
+        plan_app="api",
+        plan_namespace="dev",
         status=RunStatus.QUEUED,
         redis_state_key="devassist:runs:run-123",
     )
@@ -74,6 +77,9 @@ def test_run_models_include_redis_keys_for_state_and_events():
 
     assert run.redis_state_key.startswith("devassist:runs:")
     assert run.plan_summary == "Deploy api in namespace dev"
+    assert run.plan_action is DeploymentAction.DEPLOY
+    assert run.plan_app == "api"
+    assert run.plan_namespace == "dev"
     assert event.redis_stream_key.endswith(":events")
 
 
