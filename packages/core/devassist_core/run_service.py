@@ -27,6 +27,9 @@ def queue_execution_run(
         run_id=run_id,
         plan_id=plan.plan_id,
         plan_summary=plan.summary,
+        plan_action=plan.intent.action,
+        plan_app=plan.intent.app,
+        plan_namespace=plan.intent.namespace,
         status=RunStatus.QUEUED,
         redis_state_key=run_state_key(run_id),
     )

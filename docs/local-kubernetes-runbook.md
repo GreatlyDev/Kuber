@@ -114,7 +114,7 @@ curl http://localhost:8000/runs/<run-id>
 curl http://localhost:8000/runs/<run-id>/events
 ```
 
-Run responses include `plan_summary` so the Redis-backed run history remains understandable even if the local in-memory plan list is reset.
+Run responses include `plan_summary`, `plan_action`, `plan_app`, and `plan_namespace` so the Redis-backed run history remains understandable even if the local in-memory plan list is reset.
 
 If execution fails, the API response includes a failed `run_id` and `events_path`. Use those values with the same run inspection endpoints to see the stored `run.failed` event. Executor policy denial is also recorded as a failed run.
 
