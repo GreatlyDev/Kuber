@@ -96,6 +96,7 @@ class ExecutionPlan(StrictModel):
 class ExecutionRun(StrictModel):
     run_id: str = Field(default_factory=lambda: f"run-{uuid4().hex}")
     plan_id: str
+    plan_summary: str | None = None
     status: RunStatus
     redis_state_key: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

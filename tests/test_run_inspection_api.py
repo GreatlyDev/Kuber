@@ -61,6 +61,7 @@ def test_list_runs_returns_recent_runs():
     store.runs["run-123"] = ExecutionRun(
         run_id="run-123",
         plan_id="plan-123",
+        plan_summary="Deploy api in namespace dev",
         status=RunStatus.SUCCEEDED,
         redis_state_key=run_state_key("run-123"),
     )
@@ -71,6 +72,7 @@ def test_list_runs_returns_recent_runs():
 
     assert response.status_code == 200
     assert response.json()[0]["run_id"] == "run-123"
+    assert response.json()[0]["plan_summary"] == "Deploy api in namespace dev"
     assert store.list_runs_calls == [{"status": None, "limit": 50}]
 
 

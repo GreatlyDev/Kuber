@@ -26,6 +26,7 @@ def queue_execution_run(
     run = ExecutionRun(
         run_id=run_id,
         plan_id=plan.plan_id,
+        plan_summary=plan.summary,
         status=RunStatus.QUEUED,
         redis_state_key=run_state_key(run_id),
     )
