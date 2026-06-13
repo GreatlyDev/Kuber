@@ -263,3 +263,41 @@ def test_appends_and_loads_run_events_from_redis_stream():
 
     assert stream_id == "1-0"
     assert events == [event]
+
+
+def test_lists_run_events_with_event_type_filter_and_limit():
+    redis = FakeRedis()
+    store = RedisRunStore(redis)
+    queued = RunEvent(
+        event_id="evt-queued",
+        run_id="run-123",
+        event_type="run.queued",
+        message="Run queued",
+        redis_stream_key=run_events_key("run-123"),
+        created_at=datetime(2026, 5, 27, 12, 0, tzinfo=UTC),
+    )
+    failed_first = RunEvent(
+        event_id="evt-failed-first",
+        run_id="run-123",
+        event_type="run.failed",
+        message="Run failed",
+        redis_stream_key=run_events_key("run-123"),
+        payload={"error": "cluster unavailable"},
+        created_at=datetime(2026, 5, 27, 12, 1, tzinfo=UTC),
+    )
+    failed_second = RunEvent(
+        event_id="evt-failed-second",
+        run_id="run-123",
+        event_type="run.failed",
+        message="Run failed",
+        redis_stream_key=run_events_key("run-123"),
+        payload={"error": "policy denied"},
+        created_at=datetime(2026, 5, 27, 12, 2, tzinfo=UTC),
+    )
+    store.append_event(queued)
+    store.append_event(failed_first)
+    store.append_event(failed_second)
+
+    events = store.list_events("run-123", event_type="run.failed", limit=1)
+
+    assert [event.event_id for event in events] == ["evt-failed-first"]

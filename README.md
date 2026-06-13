@@ -158,7 +158,11 @@ curl "http://localhost:8000/runs?action=deploy&app=api&namespace=dev"
 curl "http://localhost:8000/runs?plan_id=<plan-id>"
 ```
 
-Run event inspection is tied to a stored run. `GET /runs/{run_id}/events` returns `404` when the run id is unknown instead of returning an empty timeline.
+Run event inspection is tied to a stored run. `GET /runs/{run_id}/events` returns `404` when the run id is unknown instead of returning an empty timeline. Use `event_type` and `limit` to narrow the timeline while debugging:
+
+```powershell
+curl "http://localhost:8000/runs/<run-id>/events?event_type=run.failed&limit=1"
+```
 
 Runtime wiring is controlled by environment variables:
 

@@ -9,13 +9,26 @@ class FakeStore:
     def __init__(self):
         self.runs = {}
         self.events = {}
+        self.list_events_calls = []
         self.list_runs_calls = []
 
     def get_run(self, run_id):
         return self.runs.get(run_id)
 
-    def list_events(self, run_id):
-        return self.events.get(run_id, [])
+    def list_events(self, run_id, event_type=None, limit=None):
+        self.list_events_calls.append(
+            {
+                "run_id": run_id,
+                "event_type": event_type,
+                "limit": limit,
+            }
+        )
+        events = self.events.get(run_id, [])
+        if event_type is not None:
+            events = [event for event in events if event.event_type == event_type]
+        if limit is not None:
+            events = events[:limit]
+        return events
 
     def list_runs(
         self,
@@ -310,3 +323,82 @@ def test_get_run_events_returns_stored_events():
     assert response.json()[0]["payload"] == {
         "messages": ["patched deployment api image"]
     }
+
+
+def test_get_run_events_accepts_event_type_filter_and_limit():
+    store = FakeStore()
+    store.runs["run-123"] = ExecutionRun(
+        run_id="run-123",
+        plan_id="plan-123",
+        status=RunStatus.FAILED,
+        redis_state_key=run_state_key("run-123"),
+    )
+    store.events["run-123"] = [
+        RunEvent(
+            event_id="evt-started",
+            run_id="run-123",
+            event_type="run.started",
+            message="Run started",
+            redis_stream_key=run_events_key("run-123"),
+        ),
+        RunEvent(
+            event_id="evt-failed",
+            run_id="run-123",
+            event_type="run.failed",
+            message="Run failed",
+            redis_stream_key=run_events_key("run-123"),
+            payload={"error": "cluster unavailable"},
+        ),
+    ]
+    main.execution_runtime = FakeRuntime(store)
+    client = TestClient(main.app)
+
+    response = client.get(
+        "/runs/run-123/events",
+        params={"event_type": "run.failed", "limit": 1},
+    )
+
+    assert response.status_code == 200
+    assert [event["event_id"] for event in response.json()] == ["evt-failed"]
+    assert store.list_events_calls == [
+        {
+            "run_id": "run-123",
+            "event_type": "run.failed",
+            "limit": 1,
+        }
+    ]
+
+
+def test_get_run_events_rejects_invalid_event_type_filter():
+    store = FakeStore()
+    store.runs["run-123"] = ExecutionRun(
+        run_id="run-123",
+        plan_id="plan-123",
+        status=RunStatus.SUCCEEDED,
+        redis_state_key=run_state_key("run-123"),
+    )
+    main.execution_runtime = FakeRuntime(store)
+    client = TestClient(main.app)
+
+    response = client.get(
+        "/runs/run-123/events",
+        params={"event_type": "failed"},
+    )
+
+    assert response.status_code == 422
+
+
+def test_get_run_events_rejects_invalid_limit():
+    store = FakeStore()
+    store.runs["run-123"] = ExecutionRun(
+        run_id="run-123",
+        plan_id="plan-123",
+        status=RunStatus.SUCCEEDED,
+        redis_state_key=run_state_key("run-123"),
+    )
+    main.execution_runtime = FakeRuntime(store)
+    client = TestClient(main.app)
+
+    response = client.get("/runs/run-123/events", params={"limit": 0})
+
+    assert response.status_code == 422

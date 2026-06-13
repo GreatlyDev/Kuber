@@ -21,6 +21,7 @@ from devassist_core.schemas import (
     KUBERNETES_NAME_PATTERN,
     PipelineIntent,
     PlanStatus,
+    RUN_EVENT_TYPE_PATTERN,
     RunEvent,
     RunStatus,
 )
@@ -220,12 +221,16 @@ def get_run(run_id: str) -> ExecutionRun:
 
 
 @app.get("/runs/{run_id}/events", response_model=list[RunEvent])
-def get_run_events(run_id: str) -> list[RunEvent]:
+def get_run_events(
+    run_id: str,
+    event_type: str | None = Query(default=None, pattern=RUN_EVENT_TYPE_PATTERN),
+    limit: int | None = Query(default=None, ge=1, le=100),
+) -> list[RunEvent]:
     runtime = _require_execution_runtime()
     run = runtime.store.get_run(run_id)
     if run is None:
         raise HTTPException(status_code=404, detail=f"run '{run_id}' was not found")
-    return runtime.store.list_events(run_id)
+    return runtime.store.list_events(run_id, event_type=event_type, limit=limit)
 
 
 def _load_plan(plan_id: str) -> ExecutionPlan:

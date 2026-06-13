@@ -13,6 +13,7 @@ from pydantic import (
 )
 
 KUBERNETES_NAME_PATTERN = r"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+RUN_EVENT_TYPE_PATTERN = r"^[a-z0-9][a-z0-9-]*(\.[a-z0-9][a-z0-9-]*)+$"
 
 
 class StrictModel(BaseModel):
