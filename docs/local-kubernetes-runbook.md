@@ -124,6 +124,7 @@ Filter recent runs by status when you want a quick history view:
 
 ```powershell
 curl "http://localhost:8000/runs?status=succeeded&limit=10"
+curl "http://localhost:8000/runs?action=deploy&app=api&namespace=dev"
 ```
 
 Inspect the deployment state through DevAssist's Kubernetes API-client path:

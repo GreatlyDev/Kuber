@@ -6,7 +6,7 @@ from devassist_core.run_store import (
     run_index_key,
     run_state_key,
 )
-from devassist_core.schemas import ExecutionRun, RunEvent, RunStatus
+from devassist_core.schemas import DeploymentAction, ExecutionRun, RunEvent, RunStatus
 
 
 class FakeRedis:
@@ -167,6 +167,56 @@ def test_lists_recent_runs_with_status_filter_and_limit():
     runs = store.list_runs(status=RunStatus.SUCCEEDED, limit=1)
 
     assert [run.run_id for run in runs] == ["run-third"]
+
+
+def test_lists_runs_with_plan_metadata_filters():
+    redis = FakeRedis()
+    store = RedisRunStore(redis)
+    matching = ExecutionRun(
+        run_id="run-matching",
+        plan_id="plan-matching",
+        plan_summary="Deploy api in namespace dev",
+        plan_action=DeploymentAction.DEPLOY,
+        plan_app="api",
+        plan_namespace="dev",
+        status=RunStatus.SUCCEEDED,
+        redis_state_key=run_state_key("run-matching"),
+        created_at=datetime(2026, 5, 27, 12, 10, tzinfo=UTC),
+    )
+    wrong_action = ExecutionRun(
+        run_id="run-scale",
+        plan_id="plan-scale",
+        plan_summary="Scale api in namespace dev",
+        plan_action=DeploymentAction.SCALE,
+        plan_app="api",
+        plan_namespace="dev",
+        status=RunStatus.SUCCEEDED,
+        redis_state_key=run_state_key("run-scale"),
+        created_at=datetime(2026, 5, 27, 12, 5, tzinfo=UTC),
+    )
+    wrong_namespace = ExecutionRun(
+        run_id="run-staging",
+        plan_id="plan-staging",
+        plan_summary="Deploy api in namespace staging",
+        plan_action=DeploymentAction.DEPLOY,
+        plan_app="api",
+        plan_namespace="staging",
+        status=RunStatus.SUCCEEDED,
+        redis_state_key=run_state_key("run-staging"),
+        created_at=datetime(2026, 5, 27, 12, 0, tzinfo=UTC),
+    )
+
+    store.save_run(matching)
+    store.save_run(wrong_action)
+    store.save_run(wrong_namespace)
+
+    runs = store.list_runs(
+        action=DeploymentAction.DEPLOY,
+        app="api",
+        namespace="dev",
+    )
+
+    assert [run.run_id for run in runs] == ["run-matching"]
 
 
 def test_appends_and_loads_run_events_from_redis_stream():

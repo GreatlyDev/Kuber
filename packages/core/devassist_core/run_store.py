@@ -1,7 +1,7 @@
 import json
 from typing import Protocol
 
-from devassist_core.schemas import ExecutionRun, RunEvent, RunStatus
+from devassist_core.schemas import DeploymentAction, ExecutionRun, RunEvent, RunStatus
 
 
 def run_state_key(run_id: str) -> str:
@@ -53,6 +53,9 @@ class RedisRunStore:
         self,
         *,
         status: RunStatus | None = None,
+        action: DeploymentAction | None = None,
+        app: str | None = None,
+        namespace: str | None = None,
         limit: int = 50,
     ) -> list[ExecutionRun]:
         run_ids = [
@@ -65,6 +68,12 @@ class RedisRunStore:
             if run is None:
                 continue
             if status is not None and run.status is not status:
+                continue
+            if action is not None and run.plan_action is not action:
+                continue
+            if app is not None and run.plan_app != app:
+                continue
+            if namespace is not None and run.plan_namespace != namespace:
                 continue
             runs.append(run)
             if len(runs) >= limit:
