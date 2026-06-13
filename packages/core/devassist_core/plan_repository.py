@@ -15,8 +15,20 @@ class InMemoryPlanRepository:
     def get(self, plan_id: str) -> ExecutionPlan | None:
         return self._plans.get(plan_id)
 
-    def list(self) -> list[ExecutionPlan]:
-        return list(self._plans.values())
+    def list(
+        self,
+        *,
+        status: PlanStatus | None = None,
+        limit: int | None = None,
+    ) -> list[ExecutionPlan]:
+        plans = []
+        for plan in self._plans.values():
+            if status is not None and plan.status is not status:
+                continue
+            plans.append(plan)
+            if limit is not None and len(plans) >= limit:
+                break
+        return plans
 
     def approve(self, plan_id: str, approved_by: str) -> ExecutionPlan:
         approved_by = approved_by.strip()

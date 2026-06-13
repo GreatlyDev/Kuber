@@ -106,6 +106,12 @@ curl http://localhost:8000/plans/<plan-id>/policy
 
 When the runtime is enabled, this preview uses the same namespace allowlist that execution uses.
 
+You can filter the in-memory plan list while the API process is running:
+
+```powershell
+curl "http://localhost:8000/plans?status=approved&limit=10"
+```
+
 Use the printed run id to inspect the stored run and event timeline:
 
 ```powershell

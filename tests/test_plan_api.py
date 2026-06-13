@@ -71,6 +71,53 @@ def test_gets_created_plan():
     assert response.json()["plan_id"] == created["plan_id"]
 
 
+def test_lists_plans_by_status_with_limit():
+    client = TestClient(app)
+    client.post(
+        "/plans",
+        json={"text": "deploy api to dev with image example/api:1.0.0"},
+    )
+    first_approved = client.post(
+        "/plans",
+        json={"text": "deploy worker to dev with image example/worker:1.0.0"},
+    ).json()
+    second_approved = client.post(
+        "/plans",
+        json={"text": "deploy jobs to dev with image example/jobs:1.0.0"},
+    ).json()
+    client.post(
+        f"/plans/{first_approved['plan_id']}/approve",
+        json={"approved_by": "great"},
+    )
+    client.post(
+        f"/plans/{second_approved['plan_id']}/approve",
+        json={"approved_by": "great"},
+    )
+
+    response = client.get("/plans", params={"status": "approved", "limit": 1})
+
+    assert response.status_code == 200
+    assert [plan["plan_id"] for plan in response.json()] == [
+        first_approved["plan_id"]
+    ]
+
+
+def test_list_plans_rejects_invalid_status_filter():
+    client = TestClient(app)
+
+    response = client.get("/plans", params={"status": "done"})
+
+    assert response.status_code == 422
+
+
+def test_list_plans_rejects_invalid_limit():
+    client = TestClient(app)
+
+    response = client.get("/plans", params={"limit": 0})
+
+    assert response.status_code == 422
+
+
 def test_approves_plan_and_policy_allows_it():
     client = TestClient(app)
     created = client.post(
