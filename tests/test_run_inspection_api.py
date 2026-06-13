@@ -179,6 +179,24 @@ def test_list_runs_accepts_plan_metadata_filters():
     ]
 
 
+def test_list_runs_rejects_invalid_app_filter():
+    main.execution_runtime = FakeRuntime(FakeStore())
+    client = TestClient(main.app)
+
+    response = client.get("/runs", params={"app": "API"})
+
+    assert response.status_code == 422
+
+
+def test_list_runs_rejects_invalid_namespace_filter():
+    main.execution_runtime = FakeRuntime(FakeStore())
+    client = TestClient(main.app)
+
+    response = client.get("/runs", params={"namespace": "dev_env"})
+
+    assert response.status_code == 422
+
+
 def test_get_run_returns_stored_run():
     store = FakeStore()
     store.runs["run-123"] = ExecutionRun(

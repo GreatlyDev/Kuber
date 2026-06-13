@@ -18,6 +18,7 @@ from devassist_core.schemas import (
     DeploymentState,
     ExecutionPlan,
     ExecutionRun,
+    KUBERNETES_NAME_PATTERN,
     PipelineIntent,
     RunEvent,
     RunStatus,
@@ -185,8 +186,12 @@ def run_plan(plan_id: str) -> ExecutionRun:
 def list_runs(
     run_status: RunStatus | None = Query(default=None, alias="status"),
     action: DeploymentAction | None = Query(default=None),
-    app_name: str | None = Query(default=None, alias="app"),
-    namespace: str | None = Query(default=None),
+    app_name: str | None = Query(
+        default=None,
+        alias="app",
+        pattern=KUBERNETES_NAME_PATTERN,
+    ),
+    namespace: str | None = Query(default=None, pattern=KUBERNETES_NAME_PATTERN),
     limit: int = Query(default=50, ge=1, le=100),
 ) -> list[ExecutionRun]:
     runtime = _require_execution_runtime()

@@ -127,6 +127,8 @@ curl "http://localhost:8000/runs?status=succeeded&limit=10"
 curl "http://localhost:8000/runs?action=deploy&app=api&namespace=dev"
 ```
 
+The `app` and `namespace` filters follow the same Kubernetes name format as parsed intents.
+
 Inspect the deployment state through DevAssist's Kubernetes API-client path:
 
 ```powershell
