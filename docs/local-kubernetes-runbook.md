@@ -124,6 +124,10 @@ Run responses include `plan_summary`, `plan_action`, `plan_app`, and `plan_names
 
 If execution fails, the API response includes a failed `run_id` and `events_path`. Use those values with the same run inspection endpoints to see the stored `run.failed` event. Executor policy denial is also recorded as a failed run.
 
+```powershell
+curl "http://localhost:8000/runs/<run-id>/events?event_type=run.failed&limit=1"
+```
+
 If a run id is unknown, both the run detail and event timeline endpoints return `404`.
 
 Filter recent runs by status when you want a quick history view:

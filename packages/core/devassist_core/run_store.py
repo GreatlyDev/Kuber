@@ -87,12 +87,23 @@ class RedisRunStore:
         stream_id = self.redis.xadd(event.redis_stream_key, _model_to_hash(event))
         return _decode(stream_id)
 
-    def list_events(self, run_id: str) -> list[RunEvent]:
+    def list_events(
+        self,
+        run_id: str,
+        *,
+        event_type: str | None = None,
+        limit: int | None = None,
+    ) -> list[RunEvent]:
         entries = self.redis.xrange(run_events_key(run_id))
-        return [
-            RunEvent.model_validate(_hash_to_model_data(fields))
-            for _stream_id, fields in entries
-        ]
+        events = []
+        for _stream_id, fields in entries:
+            event = RunEvent.model_validate(_hash_to_model_data(fields))
+            if event_type is not None and event.event_type != event_type:
+                continue
+            events.append(event)
+            if limit is not None and len(events) >= limit:
+                break
+        return events
 
 
 def _model_to_hash(model: ExecutionRun | RunEvent) -> dict[str, str]:
