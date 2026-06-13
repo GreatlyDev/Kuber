@@ -20,6 +20,7 @@ from devassist_core.schemas import (
     ExecutionRun,
     KUBERNETES_NAME_PATTERN,
     PipelineIntent,
+    PlanStatus,
     RunEvent,
     RunStatus,
 )
@@ -100,8 +101,11 @@ def create_plan(request: CreatePlanRequest) -> ExecutionPlan:
 
 
 @app.get("/plans", response_model=list[ExecutionPlan])
-def list_plans() -> list[ExecutionPlan]:
-    return plan_repository.list()
+def list_plans(
+    plan_status: PlanStatus | None = Query(default=None, alias="status"),
+    limit: int = Query(default=50, ge=1, le=100),
+) -> list[ExecutionPlan]:
+    return plan_repository.list(status=plan_status, limit=limit)
 
 
 @app.get("/plans/{plan_id}", response_model=ExecutionPlan)

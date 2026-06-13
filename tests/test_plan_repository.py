@@ -27,6 +27,19 @@ def test_saves_and_loads_plan():
     assert repository.get(plan.plan_id) == plan
 
 
+def test_lists_plans_by_status_with_limit():
+    repository = InMemoryPlanRepository()
+    repository.save(_plan())
+    first_approved = repository.save(_plan())
+    second_approved = repository.save(_plan())
+    repository.approve(first_approved.plan_id, approved_by="great")
+    repository.approve(second_approved.plan_id, approved_by="great")
+
+    plans = repository.list(status=PlanStatus.APPROVED, limit=1)
+
+    assert [plan.plan_id for plan in plans] == [first_approved.plan_id]
+
+
 def test_approves_plan_with_named_approver():
     repository = InMemoryPlanRepository()
     plan = repository.save(_plan())
