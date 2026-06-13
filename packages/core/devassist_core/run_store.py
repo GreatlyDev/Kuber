@@ -56,6 +56,7 @@ class RedisRunStore:
         action: DeploymentAction | None = None,
         app: str | None = None,
         namespace: str | None = None,
+        plan_id: str | None = None,
         limit: int = 50,
     ) -> list[ExecutionRun]:
         run_ids = [
@@ -74,6 +75,8 @@ class RedisRunStore:
             if app is not None and run.plan_app != app:
                 continue
             if namespace is not None and run.plan_namespace != namespace:
+                continue
+            if plan_id is not None and run.plan_id != plan_id:
                 continue
             runs.append(run)
             if len(runs) >= limit:
