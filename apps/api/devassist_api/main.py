@@ -192,6 +192,7 @@ def list_runs(
         pattern=KUBERNETES_NAME_PATTERN,
     ),
     namespace: str | None = Query(default=None, pattern=KUBERNETES_NAME_PATTERN),
+    plan_id: str | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=100),
 ) -> list[ExecutionRun]:
     runtime = _require_execution_runtime()
@@ -200,6 +201,7 @@ def list_runs(
         action=action,
         app=app_name,
         namespace=namespace,
+        plan_id=plan_id,
         limit=limit,
     )
 

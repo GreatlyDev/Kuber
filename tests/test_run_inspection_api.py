@@ -17,7 +17,15 @@ class FakeStore:
     def list_events(self, run_id):
         return self.events.get(run_id, [])
 
-    def list_runs(self, status=None, limit=50, action=None, app=None, namespace=None):
+    def list_runs(
+        self,
+        status=None,
+        limit=50,
+        action=None,
+        app=None,
+        namespace=None,
+        plan_id=None,
+    ):
         self.list_runs_calls.append(
             {
                 "status": status,
@@ -25,6 +33,7 @@ class FakeStore:
                 "action": action,
                 "app": app,
                 "namespace": namespace,
+                "plan_id": plan_id,
             }
         )
         runs = list(self.runs.values())
@@ -36,6 +45,8 @@ class FakeStore:
             runs = [run for run in runs if run.plan_app == app]
         if namespace is not None:
             runs = [run for run in runs if run.plan_namespace == namespace]
+        if plan_id is not None:
+            runs = [run for run in runs if run.plan_id == plan_id]
         return runs[:limit]
 
 
@@ -100,6 +111,7 @@ def test_list_runs_returns_recent_runs():
             "action": None,
             "app": None,
             "namespace": None,
+            "plan_id": None,
         }
     ]
 
@@ -132,6 +144,7 @@ def test_list_runs_accepts_status_filter_and_limit():
             "action": None,
             "app": None,
             "namespace": None,
+            "plan_id": None,
         }
     ]
 
@@ -175,6 +188,40 @@ def test_list_runs_accepts_plan_metadata_filters():
             "action": "deploy",
             "app": "api",
             "namespace": "dev",
+            "plan_id": None,
+        }
+    ]
+
+
+def test_list_runs_accepts_plan_id_filter():
+    store = FakeStore()
+    store.runs["run-target"] = ExecutionRun(
+        run_id="run-target",
+        plan_id="plan-target",
+        status=RunStatus.SUCCEEDED,
+        redis_state_key=run_state_key("run-target"),
+    )
+    store.runs["run-other"] = ExecutionRun(
+        run_id="run-other",
+        plan_id="plan-other",
+        status=RunStatus.SUCCEEDED,
+        redis_state_key=run_state_key("run-other"),
+    )
+    main.execution_runtime = FakeRuntime(store)
+    client = TestClient(main.app)
+
+    response = client.get("/runs", params={"plan_id": "plan-target"})
+
+    assert response.status_code == 200
+    assert [run["run_id"] for run in response.json()] == ["run-target"]
+    assert store.list_runs_calls == [
+        {
+            "status": None,
+            "limit": 50,
+            "action": None,
+            "app": None,
+            "namespace": None,
+            "plan_id": "plan-target",
         }
     ]
 

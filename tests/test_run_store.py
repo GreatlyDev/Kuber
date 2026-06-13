@@ -219,6 +219,32 @@ def test_lists_runs_with_plan_metadata_filters():
     assert [run.run_id for run in runs] == ["run-matching"]
 
 
+def test_lists_runs_with_plan_id_filter():
+    redis = FakeRedis()
+    store = RedisRunStore(redis)
+    matching = ExecutionRun(
+        run_id="run-matching",
+        plan_id="plan-target",
+        status=RunStatus.SUCCEEDED,
+        redis_state_key=run_state_key("run-matching"),
+        created_at=datetime(2026, 5, 27, 12, 10, tzinfo=UTC),
+    )
+    other = ExecutionRun(
+        run_id="run-other",
+        plan_id="plan-other",
+        status=RunStatus.SUCCEEDED,
+        redis_state_key=run_state_key("run-other"),
+        created_at=datetime(2026, 5, 27, 12, 0, tzinfo=UTC),
+    )
+
+    store.save_run(matching)
+    store.save_run(other)
+
+    runs = store.list_runs(plan_id="plan-target")
+
+    assert [run.run_id for run in runs] == ["run-matching"]
+
+
 def test_appends_and_loads_run_events_from_redis_stream():
     redis = FakeRedis()
     store = RedisRunStore(redis)
