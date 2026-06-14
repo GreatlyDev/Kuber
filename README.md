@@ -206,7 +206,7 @@ The helper script at `scripts/local_demo.py` calls DevAssist's API to create, ap
 
 ## CI
 
-GitHub Actions runs `python -m pytest` on pull requests and pushes to `main`.
+GitHub Actions runs `python -m pytest` and builds the local API container image on pull requests and pushes to `main`. The CI container job only verifies `docker build`; it does not push images to a registry.
 
 ## Current Scope
 
