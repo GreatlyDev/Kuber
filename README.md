@@ -93,7 +93,7 @@ Start the API:
 python -m uvicorn devassist_api.main:app --reload --port 8000
 ```
 
-You can also build and run the API container locally. The image keeps live execution disabled by default, so this is a safe way to practice containerizing the FastAPI service and checking health endpoints:
+You can also build and run the API container locally. The image keeps live execution disabled by default, runs the API as a non-root user, and includes a Docker healthcheck for `/healthz`. This is a safe way to practice containerizing the FastAPI service and checking health endpoints:
 
 ```powershell
 docker build -t devassist-api:local .

@@ -17,6 +17,23 @@ def test_api_dockerfile_runs_fastapi_with_execution_disabled_by_default():
     assert "kubectl" not in dockerfile.lower()
 
 
+def test_api_dockerfile_uses_non_root_runtime_user():
+    dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
+
+    assert "adduser" in dockerfile
+    assert "devassist" in dockerfile
+    assert "USER devassist" in dockerfile
+    assert dockerfile.index("USER devassist") < dockerfile.index("CMD [")
+
+
+def test_api_dockerfile_defines_healthcheck_against_health_endpoint():
+    dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
+
+    assert "HEALTHCHECK" in dockerfile
+    assert "http://127.0.0.1:8000/healthz" in dockerfile
+    assert "urllib.request" in dockerfile
+
+
 def test_dockerignore_keeps_local_state_out_of_build_context():
     dockerignore = (ROOT / ".dockerignore").read_text(encoding="utf-8")
 
