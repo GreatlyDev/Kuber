@@ -93,6 +93,14 @@ Start the API:
 python -m uvicorn devassist_api.main:app --reload --port 8000
 ```
 
+You can also build and run the API container locally. The image keeps live execution disabled by default, so this is a safe way to practice containerizing the FastAPI service and checking health endpoints:
+
+```powershell
+docker build -t devassist-api:local .
+docker run --rm -p 8000:8000 devassist-api:local
+curl http://localhost:8000/healthz
+```
+
 For the local Redis plus Kubernetes execution workflow on Windows, use the helper script from the repo root:
 
 ```powershell
@@ -224,6 +232,7 @@ Implemented so far:
 - Guarded Kubernetes API executor for deploy, scale, and status plans with tests
 - Local Kubernetes demo manifest and runbook
 - Local demo API script with tests
+- Local API Dockerfile and `.dockerignore`
 - Windows local developer start/stop scripts
 - README setup instructions
 
