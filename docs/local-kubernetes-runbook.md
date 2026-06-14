@@ -56,7 +56,7 @@ docker run --name devassist-redis -p 6379:6379 redis:7
 
 ## Run The API Container
 
-The API image is useful for practicing container builds and health checks. It starts with live execution disabled unless you pass runtime environment variables, so it does not need Redis or Kubernetes just to boot:
+The API image is useful for practicing container builds and health checks. It starts with live execution disabled unless you pass runtime environment variables, runs as a non-root user, and includes a Docker healthcheck for `/healthz`, so it does not need Redis or Kubernetes just to boot:
 
 ```powershell
 docker build -t devassist-api:local .
