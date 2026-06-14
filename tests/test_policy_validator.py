@@ -100,3 +100,14 @@ def test_policy_rejects_rejected_mutating_plan_with_rejection_reason():
         allowed=False,
         reasons=["rejected ExecutionPlans cannot be run"],
     )
+
+
+def test_policy_rejects_supported_schema_action_that_executor_does_not_implement():
+    decision = validate_execution_plan(
+        _plan(status=PlanStatus.APPROVED, action=DeploymentAction.RESTART)
+    )
+
+    assert decision == PolicyDecision(
+        allowed=False,
+        reasons=["action 'restart' is not supported by the MVP Kubernetes executor"],
+    )

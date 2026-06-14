@@ -7,6 +7,13 @@ from devassist_core.schemas import DeploymentAction, ExecutionPlan, PlanStatus
 DEFAULT_NAMESPACE_ALLOWLIST = frozenset({"default", "dev", "local", "staging"})
 LOCAL_NAMESPACE_ALLOWLIST = DEFAULT_NAMESPACE_ALLOWLIST
 READ_ONLY_ACTIONS = frozenset({DeploymentAction.STATUS})
+SUPPORTED_KUBERNETES_ACTIONS = frozenset(
+    {
+        DeploymentAction.DEPLOY,
+        DeploymentAction.SCALE,
+        DeploymentAction.STATUS,
+    }
+)
 
 
 class PolicyDecision(BaseModel):
@@ -32,6 +39,10 @@ def validate_execution_plan(
         reasons.append("mutating Kubernetes actions require an approved ExecutionPlan")
 
     for step in plan.steps:
+        if step.action not in SUPPORTED_KUBERNETES_ACTIONS:
+            reasons.append(
+                f"action '{step.action.value}' is not supported by the MVP Kubernetes executor"
+            )
         if step.namespace not in namespace_allowlist:
             reasons.append(
                 f"namespace '{step.namespace}' is outside the configured namespace allowlist"

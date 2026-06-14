@@ -1,12 +1,10 @@
 from datetime import UTC, datetime
 
-import pytest
 from kubernetes.client.exceptions import ApiException
 
 from devassist_core.kubernetes_executor import (
     KubernetesExecutionResult,
     KubernetesPlanExecutor,
-    UnsupportedKubernetesActionError,
 )
 from devassist_core.plan_builder import build_execution_plan
 from devassist_core.policy import PolicyDecision
@@ -191,7 +189,15 @@ def test_unsupported_action_fails_before_kubernetes_call():
     apps_api = FakeAppsV1Api()
     executor = KubernetesPlanExecutor(apps_api)
 
-    with pytest.raises(UnsupportedKubernetesActionError):
-        executor.execute(_plan(action=DeploymentAction.RESTART))
+    result = executor.execute(_plan(action=DeploymentAction.RESTART))
 
+    assert result == KubernetesExecutionResult(
+        applied=False,
+        policy=PolicyDecision(
+            allowed=False,
+            reasons=["action 'restart' is not supported by the MVP Kubernetes executor"],
+        ),
+        deployment_state=None,
+        messages=[],
+    )
     assert apps_api.patches == []
