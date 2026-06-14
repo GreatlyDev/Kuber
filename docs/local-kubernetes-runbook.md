@@ -54,6 +54,18 @@ If you want to run Redis manually instead:
 docker run --name devassist-redis -p 6379:6379 redis:7
 ```
 
+## Run The API Container
+
+The API image is useful for practicing container builds and health checks. It starts with live execution disabled unless you pass runtime environment variables, so it does not need Redis or Kubernetes just to boot:
+
+```powershell
+docker build -t devassist-api:local .
+docker run --rm -p 8000:8000 devassist-api:local
+curl http://localhost:8000/healthz
+```
+
+For the full Redis plus Kubernetes execution workflow, use the PowerShell helper below while the MVP is still local-first.
+
 ## Enable DevAssist Runtime
 
 Copy `.env.example` to `.env` and set:
