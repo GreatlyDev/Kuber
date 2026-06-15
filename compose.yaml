@@ -1,0 +1,22 @@
+services:
+  api:
+    image: devassist-api:local
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    environment:
+      DEVASSIST_EXECUTION_ENABLED: "false"
+      REDIS_URL: redis://redis:6379/0
+      KUBERNETES_CONFIG_MODE: auto
+      DEVASSIST_ALLOWED_NAMESPACES: dev
+
+  redis:
+    image: redis:7
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5

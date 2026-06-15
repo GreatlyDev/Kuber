@@ -101,6 +101,16 @@ docker run --rm -p 8000:8000 devassist-api:local
 curl http://localhost:8000/healthz
 ```
 
+For a local API plus Redis stack, use Docker Compose. This keeps live Kubernetes execution disabled by default while giving the API a Redis service URL:
+
+```powershell
+docker compose up --build
+curl http://localhost:8000/healthz
+docker compose down
+```
+
+Compose keeps Redis private to the project network, so it will not conflict with another Redis instance already using `localhost:6379`.
+
 For the local Redis plus Kubernetes execution workflow on Windows, use the helper script from the repo root:
 
 ```powershell
@@ -233,6 +243,7 @@ Implemented so far:
 - Local Kubernetes demo manifest and runbook
 - Local demo API script with tests
 - Local API Dockerfile and `.dockerignore`
+- Local Docker Compose API plus Redis stack
 - Windows local developer start/stop scripts
 - README setup instructions
 
