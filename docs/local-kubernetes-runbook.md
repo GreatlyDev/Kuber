@@ -64,6 +64,16 @@ docker run --rm -p 8000:8000 devassist-api:local
 curl http://localhost:8000/healthz
 ```
 
+To run the API and Redis together without enabling live Kubernetes execution:
+
+```powershell
+docker compose up --build
+curl http://localhost:8000/healthz
+docker compose down
+```
+
+Compose keeps Redis private to the project network, so it will not conflict with a manually started `devassist-redis` container on `localhost:6379`.
+
 For the full Redis plus Kubernetes execution workflow, use the PowerShell helper below while the MVP is still local-first.
 
 ## Enable DevAssist Runtime
