@@ -1,8 +1,11 @@
 from collections.abc import Collection
 
-from pydantic import BaseModel, ConfigDict
-
-from devassist_core.schemas import DeploymentAction, ExecutionPlan, PlanStatus
+from devassist_core.schemas import (
+    DeploymentAction,
+    ExecutionPlan,
+    PlanStatus,
+    PolicyDecision,
+)
 
 DEFAULT_NAMESPACE_ALLOWLIST = frozenset({"default", "dev", "local", "staging"})
 LOCAL_NAMESPACE_ALLOWLIST = DEFAULT_NAMESPACE_ALLOWLIST
@@ -14,13 +17,6 @@ SUPPORTED_KUBERNETES_ACTIONS = frozenset(
         DeploymentAction.STATUS,
     }
 )
-
-
-class PolicyDecision(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    allowed: bool
-    reasons: list[str]
 
 
 def validate_execution_plan(

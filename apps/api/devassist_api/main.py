@@ -14,6 +14,7 @@ from devassist_core.plan_builder import build_execution_plan
 from devassist_core.plan_repository import InMemoryPlanRepository
 from devassist_core.policy import PolicyDecision, validate_execution_plan
 from devassist_core.schemas import (
+    ApprovalQueueItem,
     DeploymentAction,
     DeploymentState,
     ExecutionPlan,
@@ -107,6 +108,17 @@ def list_plans(
     limit: int = Query(default=50, ge=1, le=100),
 ) -> list[ExecutionPlan]:
     return plan_repository.list(status=plan_status, limit=limit)
+
+
+@app.get("/approvals/pending", response_model=list[ApprovalQueueItem])
+def list_pending_approvals(
+    limit: int = Query(default=50, ge=1, le=100),
+) -> list[ApprovalQueueItem]:
+    plans = plan_repository.list_pending_approvals(limit=limit)
+    return [
+        ApprovalQueueItem(plan=plan, policy=_validate_plan_policy(plan))
+        for plan in plans
+    ]
 
 
 @app.get("/plans/{plan_id}", response_model=ExecutionPlan)

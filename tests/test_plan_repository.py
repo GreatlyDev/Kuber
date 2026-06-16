@@ -40,6 +40,20 @@ def test_lists_plans_by_status_with_limit():
     assert [plan.plan_id for plan in plans] == [first_approved.plan_id]
 
 
+def test_lists_pending_approval_plans_with_limit():
+    repository = InMemoryPlanRepository()
+    first_pending = repository.save(_plan())
+    second_pending = repository.save(_plan())
+    approved = repository.save(_plan())
+    repository.approve(approved.plan_id, approved_by="great")
+
+    plans = repository.list_pending_approvals(limit=1)
+
+    assert [plan.plan_id for plan in plans] == [first_pending.plan_id]
+    assert second_pending.plan_id not in [plan.plan_id for plan in plans]
+    assert approved.plan_id not in [plan.plan_id for plan in plans]
+
+
 def test_approves_plan_with_named_approver():
     repository = InMemoryPlanRepository()
     plan = repository.save(_plan())

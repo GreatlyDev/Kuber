@@ -133,3 +133,20 @@ class DeploymentState(StrictModel):
     available_replicas: int = Field(ge=0)
     observed_at: datetime
     conditions: dict[str, str] = Field(default_factory=dict)
+
+
+class PolicyDecision(StrictModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        frozen=True,
+    )
+
+    allowed: bool
+    reasons: list[str]
+
+
+class ApprovalQueueItem(StrictModel):
+    plan: ExecutionPlan
+    policy: PolicyDecision

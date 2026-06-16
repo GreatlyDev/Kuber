@@ -134,6 +134,12 @@ You can filter the in-memory plan list while the API process is running:
 curl "http://localhost:8000/plans?status=approved&limit=10"
 ```
 
+To review draft plans that still need a human approval decision, use the pending approval queue. Each item includes the plan plus the same deterministic policy preview used before execution:
+
+```powershell
+curl "http://localhost:8000/approvals/pending?limit=10"
+```
+
 Use the printed run id to inspect the stored run and event timeline:
 
 ```powershell

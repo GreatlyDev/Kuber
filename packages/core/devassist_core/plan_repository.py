@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import UTC, datetime
 
 from devassist_core.schemas import ExecutionPlan, PlanStatus
@@ -24,6 +26,18 @@ class InMemoryPlanRepository:
         plans = []
         for plan in self._plans.values():
             if status is not None and plan.status is not status:
+                continue
+            plans.append(plan)
+            if limit is not None and len(plans) >= limit:
+                break
+        return plans
+
+    def list_pending_approvals(self, *, limit: int | None = None) -> list[ExecutionPlan]:
+        plans = []
+        for plan in self._plans.values():
+            if plan.status is not PlanStatus.DRAFT:
+                continue
+            if not plan.requires_approval:
                 continue
             plans.append(plan)
             if limit is not None and len(plans) >= limit:

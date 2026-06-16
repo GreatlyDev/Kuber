@@ -4,11 +4,13 @@ import pytest
 from pydantic import ValidationError
 
 from devassist_core.schemas import (
+    ApprovalQueueItem,
     DeploymentAction,
     DeploymentState,
     ExecutionPlan,
     ExecutionRun,
     PipelineIntent,
+    PolicyDecision,
     PlanStep,
     PlanStatus,
     RunEvent,
@@ -95,3 +97,27 @@ def test_deployment_state_tracks_observed_cluster_state():
     )
 
     assert state.available_replicas == 1
+
+
+def test_approval_queue_item_rejects_unknown_fields():
+    intent = PipelineIntent(
+        action=DeploymentAction.DEPLOY,
+        app="api",
+        namespace="dev",
+        image="example/api:1.0.0",
+    )
+    step = PlanStep(
+        action=DeploymentAction.DEPLOY,
+        resource="deployment",
+        namespace="dev",
+        name="api",
+        params={"image": "example/api:1.0.0"},
+    )
+    plan = ExecutionPlan(intent=intent, summary="Deploy api", steps=[step])
+
+    with pytest.raises(ValidationError):
+        ApprovalQueueItem(
+            plan=plan,
+            policy=PolicyDecision(allowed=False, reasons=["needs approval"]),
+            unexpected=True,
+        )
