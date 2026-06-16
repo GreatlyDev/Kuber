@@ -181,6 +181,86 @@ def test_policy_endpoint_uses_runtime_policy_when_configured():
     assert runtime.validated_plan_ids == [created["plan_id"]]
 
 
+def test_lists_pending_approvals_with_policy_decisions():
+    client = TestClient(app)
+    pending = client.post(
+        "/plans",
+        json={"text": "deploy api to dev with image example/api:1.0.0"},
+    ).json()
+    status_plan = client.post(
+        "/plans",
+        json={"text": "status api in dev"},
+    ).json()
+    approved = client.post(
+        "/plans",
+        json={"text": "scale worker in dev to 2 replicas"},
+    ).json()
+    client.post(
+        f"/plans/{approved['plan_id']}/approve",
+        json={"approved_by": "great"},
+    )
+
+    response = client.get("/approvals/pending")
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "plan": pending,
+            "policy": {
+                "allowed": False,
+                "reasons": [
+                    "mutating Kubernetes actions require an approved ExecutionPlan"
+                ],
+            },
+        }
+    ]
+    assert status_plan["requires_approval"] is False
+
+
+def test_pending_approvals_uses_runtime_policy_and_limit():
+    runtime = FakePolicyRuntime(
+        PolicyDecision(
+            allowed=False,
+            reasons=["namespace 'dev' is outside the configured namespace allowlist"],
+        )
+    )
+    main.execution_runtime = runtime
+    client = TestClient(app)
+    first = client.post(
+        "/plans",
+        json={"text": "deploy api to dev with image example/api:1.0.0"},
+    ).json()
+    second = client.post(
+        "/plans",
+        json={"text": "deploy worker to dev with image example/worker:1.0.0"},
+    ).json()
+
+    response = client.get("/approvals/pending", params={"limit": 1})
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "plan": first,
+            "policy": {
+                "allowed": False,
+                "reasons": [
+                    "namespace 'dev' is outside the configured namespace allowlist"
+                ],
+            },
+        }
+    ]
+    assert runtime.validated_plan_ids == [first["plan_id"]]
+    assert second["plan_id"] not in runtime.validated_plan_ids
+
+
+def test_pending_approvals_rejects_invalid_limit():
+    client = TestClient(app)
+
+    response = client.get("/approvals/pending", params={"limit": 0})
+
+    assert response.status_code == 422
+
+
 def test_rejects_plan():
     client = TestClient(app)
     created = client.post(

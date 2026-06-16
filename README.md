@@ -138,6 +138,7 @@ Plan endpoints:
 - `POST /plans`
 - `GET /plans`
 - `GET /plans/{plan_id}`
+- `GET /approvals/pending`
 - `POST /plans/{plan_id}/approve`
 - `POST /plans/{plan_id}/reject`
 - `POST /plans/{plan_id}/runs`
@@ -146,9 +147,10 @@ Plan endpoints:
 - `GET /runs/{run_id}`
 - `GET /runs/{run_id}/events`
 
-Plan approval is intentionally separate from execution. These endpoints can create, inspect, approve, reject, and validate an `ExecutionPlan`, but they do not run Kubernetes actions. Plan decisions are one-way: only draft plans can be approved or rejected. Plans track `created_at` and `updated_at` timestamps so approval and rejection decisions are inspectable. Rejected plans are denied by policy for every action, including read-only status checks. `GET /plans` accepts `status` and `limit` query parameters for quick local inspection:
+Plan approval is intentionally separate from execution. These endpoints can create, inspect, approve, reject, and validate an `ExecutionPlan`, but they do not run Kubernetes actions. Plan decisions are one-way: only draft plans can be approved or rejected. Plans track `created_at` and `updated_at` timestamps so approval and rejection decisions are inspectable. Rejected plans are denied by policy for every action, including read-only status checks. `GET /approvals/pending` returns draft plans that still need a human approval decision and includes the current policy preview for each plan. `GET /plans` accepts `status` and `limit` query parameters for quick local inspection:
 
 ```powershell
+curl "http://localhost:8000/approvals/pending?limit=10"
 curl "http://localhost:8000/plans?status=approved&limit=10"
 ```
 
@@ -228,6 +230,7 @@ Implemented so far:
 - Policy validator with tests
 - Execution plan builder with tests
 - In-memory plan repository and approval API with tests
+- Pending approval queue API with tests
 - Read-only deployment status API with tests
 - Runtime readiness checks for Redis and Kubernetes with tests
 - Guarded run execution API with tests
@@ -250,5 +253,5 @@ Implemented so far:
 Not implemented yet:
 
 - Real LangChain model calls
-- Approval UI/API
+- Approval UI
 - Production deployment manifest
