@@ -25,6 +25,8 @@ class ApiError(Exception):
 def run_demo(client, request: LocalDemoRequest = LocalDemoRequest()) -> LocalDemoResult:
     base_url = request.base_url.rstrip("/")
 
+    _check_readiness(client, f"{base_url}/readyz")
+
     plan = _post(
         client,
         f"{base_url}/plans",
@@ -48,6 +50,15 @@ def run_demo(client, request: LocalDemoRequest = LocalDemoRequest()) -> LocalDem
         run_id=run["run_id"],
         run_status=run["status"],
     )
+
+
+def _check_readiness(client, url: str) -> None:
+    response = client.get(url)
+    body = response.json()
+    if response.status_code >= 400:
+        raise ApiError(f"GET {url} failed with {response.status_code}: {body}")
+    if body.get("status") != "ready":
+        raise ApiError(f"DevAssist is not ready: {body.get('dependencies', {})}")
 
 
 def _post(client, url: str, payload: dict[str, str] | None) -> dict:

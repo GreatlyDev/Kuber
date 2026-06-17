@@ -120,7 +120,7 @@ In a second PowerShell window, run the local demo flow:
 python scripts/local_demo.py
 ```
 
-The script calls DevAssist's API to create a plan, approve it, and run it. It does not call `kubectl`.
+The script checks `/readyz` first, then calls DevAssist's API to create a plan, approve it, and run it. It does not call `kubectl`.
 
 Before running a plan, you can preview the deterministic policy decision:
 
