@@ -112,7 +112,7 @@ Check runtime readiness after startup:
 curl http://localhost:8000/readyz
 ```
 
-When execution is enabled, readiness pings Redis and checks the Kubernetes Apps API using the Python client.
+Readiness always reports plan storage health. With `DEVASSIST_PLAN_STORE=redis`, `plan_store` should be `ok`; if Redis is unavailable, `/readyz` returns `503`. When execution is enabled, readiness also pings Redis for run storage and checks the Kubernetes Apps API using the Python client.
 
 In a second PowerShell window, run the local demo flow:
 

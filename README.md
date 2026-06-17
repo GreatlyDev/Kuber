@@ -130,7 +130,7 @@ Health endpoints:
 - `GET /healthz`
 - `GET /readyz`
 
-`/readyz` reports `not_configured` dependencies when live execution is disabled. When the runtime is enabled, it pings Redis and performs a read-only Kubernetes Apps API resource check; unavailable dependencies return `503`.
+`/readyz` reports `not_configured` runtime dependencies when live execution is disabled and always includes plan storage health. In-memory plan storage reports `memory`; Redis-backed plan storage reports `ok` when Redis responds and `unavailable` when it does not. When the execution runtime is enabled, readiness also pings Redis for runs and performs a read-only Kubernetes Apps API resource check; unavailable dependencies return `503`.
 
 Plan endpoints:
 
@@ -237,6 +237,7 @@ Implemented so far:
 - Execution plan builder with tests
 - In-memory plan repository and approval API with tests
 - Redis-backed plan repository with tests
+- Plan-store readiness checks with tests
 - Pending approval queue API with tests
 - Read-only deployment status API with tests
 - Runtime readiness checks for Redis and Kubernetes with tests
