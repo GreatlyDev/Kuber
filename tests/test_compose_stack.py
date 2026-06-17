@@ -31,6 +31,7 @@ def test_compose_uses_safe_local_runtime_defaults():
     assert api["environment"] == {
         "DEVASSIST_EXECUTION_ENABLED": "false",
         "REDIS_URL": "redis://redis:6379/0",
+        "DEVASSIST_PLAN_STORE": "redis",
         "KUBERNETES_CONFIG_MODE": "auto",
         "DEVASSIST_ALLOWED_NAMESPACES": "dev",
     }

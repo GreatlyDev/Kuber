@@ -1,14 +1,21 @@
 import os
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from enum import StrEnum
 
 from redis import Redis
 
 from devassist_core.execution_runtime import ExecutionRuntime
 from devassist_core.kubernetes_client import KubernetesConfigMode, build_apps_v1_api
 from devassist_core.kubernetes_executor import KubernetesPlanExecutor
+from devassist_core.plan_repository import InMemoryPlanRepository, RedisPlanRepository
 from devassist_core.policy import DEFAULT_NAMESPACE_ALLOWLIST
 from devassist_core.run_store import RedisRunStore
+
+
+class PlanStoreMode(StrEnum):
+    MEMORY = "memory"
+    REDIS = "redis"
 
 
 @dataclass(frozen=True)
@@ -18,6 +25,7 @@ class RuntimeSettings:
     kubernetes_config_mode: KubernetesConfigMode = KubernetesConfigMode.AUTO
     kubernetes_context: str | None = None
     allowed_namespaces: tuple[str, ...] = tuple(sorted(DEFAULT_NAMESPACE_ALLOWLIST))
+    plan_store: PlanStoreMode = PlanStoreMode.MEMORY
 
 
 def load_settings(environ: Mapping[str, str] | None = None) -> RuntimeSettings:
@@ -35,6 +43,7 @@ def load_settings(environ: Mapping[str, str] | None = None) -> RuntimeSettings:
             environ.get("DEVASSIST_ALLOWED_NAMESPACES"),
             default=tuple(sorted(DEFAULT_NAMESPACE_ALLOWLIST)),
         ),
+        plan_store=PlanStoreMode(environ.get("DEVASSIST_PLAN_STORE", "memory")),
     )
 
 
@@ -59,6 +68,13 @@ def build_execution_runtime(
         ),
         allowed_namespaces=settings.allowed_namespaces,
     )
+
+
+def build_plan_repository(settings: RuntimeSettings, redis_module=Redis):
+    if settings.plan_store is PlanStoreMode.REDIS:
+        redis_client = redis_module.from_url(settings.redis_url, decode_responses=True)
+        return RedisPlanRepository(redis_client)
+    return InMemoryPlanRepository()
 
 
 def _parse_bool(value: str) -> bool:

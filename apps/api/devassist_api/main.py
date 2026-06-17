@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from devassist_api.runtime import (
     RuntimeSettings,
     build_execution_runtime,
+    build_plan_repository,
     load_settings,
 )
 from devassist_core.execution_runtime import ExecutionRunFailedError
@@ -274,7 +275,9 @@ def _validate_plan_policy(plan: ExecutionPlan) -> PolicyDecision:
 def configure_execution_runtime(
     settings: RuntimeSettings | None = None,
     runtime_builder=build_execution_runtime,
+    plan_repository_builder=build_plan_repository,
 ) -> None:
-    global execution_runtime
+    global execution_runtime, plan_repository
     settings = settings or load_settings()
     execution_runtime = runtime_builder(settings)
+    plan_repository = plan_repository_builder(settings)

@@ -83,6 +83,7 @@ Copy `.env.example` to `.env` and set:
 ```text
 DEVASSIST_EXECUTION_ENABLED=true
 REDIS_URL=redis://localhost:6379/0
+DEVASSIST_PLAN_STORE=redis
 KUBERNETES_CONFIG_MODE=auto
 KUBERNETES_CONTEXT=docker-desktop
 DEVASSIST_ALLOWED_NAMESPACES=dev
@@ -95,6 +96,7 @@ Start the API with those environment values loaded in your PowerShell session:
 ```powershell
 $env:DEVASSIST_EXECUTION_ENABLED="true"
 $env:REDIS_URL="redis://localhost:6379/0"
+$env:DEVASSIST_PLAN_STORE="redis"
 $env:KUBERNETES_CONFIG_MODE="auto"
 $env:KUBERNETES_CONTEXT="docker-desktop"
 $env:DEVASSIST_ALLOWED_NAMESPACES="dev"
@@ -128,7 +130,7 @@ curl http://localhost:8000/plans/<plan-id>/policy
 
 When the runtime is enabled, this preview uses the same namespace allowlist that execution uses.
 
-You can filter the in-memory plan list while the API process is running:
+You can filter the plan list while the API process is running. With `DEVASSIST_PLAN_STORE=redis`, created and approved plans survive API restarts as long as the local Redis container is still running:
 
 ```powershell
 curl "http://localhost:8000/plans?status=approved&limit=10"
@@ -148,7 +150,7 @@ curl http://localhost:8000/runs/<run-id>
 curl http://localhost:8000/runs/<run-id>/events
 ```
 
-Run responses include `plan_summary`, `plan_action`, `plan_app`, and `plan_namespace` so the Redis-backed run history remains understandable even if the local in-memory plan list is reset.
+Run responses include `plan_summary`, `plan_action`, `plan_app`, and `plan_namespace` so the Redis-backed run history remains understandable even if local plan storage is reset.
 
 If execution fails, the API response includes a failed `run_id` and `events_path`. Use those values with the same run inspection endpoints to see the stored `run.failed` event. Executor policy denial is also recorded as a failed run.
 

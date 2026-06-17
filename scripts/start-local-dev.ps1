@@ -54,12 +54,14 @@ else {
 
 $env:DEVASSIST_EXECUTION_ENABLED = "true"
 $env:REDIS_URL = "redis://localhost:${RedisPort}/0"
+$env:DEVASSIST_PLAN_STORE = "redis"
 $env:KUBERNETES_CONFIG_MODE = "auto"
 $env:KUBERNETES_CONTEXT = $KubernetesContext
 $env:DEVASSIST_ALLOWED_NAMESPACES = $AllowedNamespaces
 
 Write-Host "Starting DevAssist API on http://127.0.0.1:$ApiPort"
 Write-Host "Redis URL: $env:REDIS_URL"
+Write-Host "Plan store: $env:DEVASSIST_PLAN_STORE"
 Write-Host "Kubernetes context: $env:KUBERNETES_CONTEXT"
 Write-Host "Allowed namespaces: $env:DEVASSIST_ALLOWED_NAMESPACES"
 Write-Host "Press Ctrl+C to stop the API. Run scripts/stop-local-dev.ps1 to stop Redis."
