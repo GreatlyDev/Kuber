@@ -20,6 +20,8 @@ class RedisPlanClient(Protocol):
 
     def hgetall(self, name: str) -> dict[object, object]: ...
 
+    def ping(self) -> object: ...
+
     def zadd(self, name: str, mapping: dict[str, float]) -> object: ...
 
     def zrange(self, name: str, start: int, end: int) -> list[object]: ...
@@ -33,6 +35,9 @@ class InMemoryPlanRepository:
     def save(self, plan: ExecutionPlan) -> ExecutionPlan:
         self._plans[plan.plan_id] = plan
         return plan
+
+    def check_health(self) -> str:
+        return "memory"
 
     def get(self, plan_id: str) -> ExecutionPlan | None:
         return self._plans.get(plan_id)
@@ -117,6 +122,9 @@ class RedisPlanRepository:
         self.redis.hset(plan_state_key(plan.plan_id), mapping=_plan_to_hash(plan))
         self.redis.zadd(plan_index_key(), {plan.plan_id: plan.created_at.timestamp()})
         return plan
+
+    def check_health(self) -> str:
+        return "ok" if self.redis.ping() else "unavailable"
 
     def get(self, plan_id: str) -> ExecutionPlan | None:
         raw = self.redis.hgetall(plan_state_key(plan_id))

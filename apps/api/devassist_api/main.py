@@ -76,6 +76,7 @@ def readyz(response: Response) -> dict[str, object]:
             "kubernetes": runtime_status,
             "redis": runtime_status,
         }
+    dependencies["plan_store"] = _check_plan_store()
 
     is_ready = all(value != "unavailable" for value in dependencies.values())
     if not is_ready:
@@ -270,6 +271,12 @@ def _validate_plan_policy(plan: ExecutionPlan) -> PolicyDecision:
     if execution_runtime is not None and hasattr(execution_runtime, "validate"):
         return execution_runtime.validate(plan)
     return validate_execution_plan(plan)
+
+
+def _check_plan_store() -> str:
+    if hasattr(plan_repository, "check_health"):
+        return plan_repository.check_health()
+    return "configured"
 
 
 def configure_execution_runtime(

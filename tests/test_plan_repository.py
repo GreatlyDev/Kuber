@@ -24,9 +24,10 @@ def _plan():
 
 
 class FakeRedis:
-    def __init__(self):
+    def __init__(self, ping_result=True):
         self.hashes = {}
         self.sorted_sets = {}
+        self.ping_result = ping_result
 
     def hset(self, name, mapping):
         self.hashes[name] = dict(mapping)
@@ -34,6 +35,9 @@ class FakeRedis:
 
     def hgetall(self, name):
         return self.hashes.get(name, {})
+
+    def ping(self):
+        return self.ping_result
 
     def zadd(self, name, mapping):
         sorted_set = self.sorted_sets.setdefault(name, {})
@@ -232,3 +236,21 @@ def test_redis_repository_rejects_missing_plan():
 
     with pytest.raises(KeyError):
         repository.approve("plan-missing", approved_by="great")
+
+
+def test_memory_repository_reports_memory_readiness():
+    repository = InMemoryPlanRepository()
+
+    assert repository.check_health() == "memory"
+
+
+def test_redis_repository_reports_ok_when_redis_pings():
+    repository = RedisPlanRepository(FakeRedis(ping_result=True))
+
+    assert repository.check_health() == "ok"
+
+
+def test_redis_repository_reports_unavailable_when_redis_ping_fails():
+    repository = RedisPlanRepository(FakeRedis(ping_result=False))
+
+    assert repository.check_health() == "unavailable"
