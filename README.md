@@ -170,7 +170,7 @@ Kubernetes execution is handled through an injected Kubernetes API client interf
 
 The run execution API requires an explicitly configured execution runtime. By default it returns `503` instead of creating a live Kubernetes client on its own. When configured, the runtime queues a run, records `run.started`, executes through the Kubernetes executor, and records `run.succeeded` or `run.failed`. Executor policy denial is recorded as `run.failed` rather than success. Failed execution responses include the failed `run_id` and an `events_path` so the recorded event timeline remains inspectable.
 
-Run history is Redis-backed. `GET /runs` lists recent runs from a deterministic Redis sorted-set index, newest first. Runs include the originating plan summary, action, app, and namespace so history remains readable while the MVP plan repository is still in-memory. Use `status`, `action`, `app`, `namespace`, and `plan_id` to filter results, and `limit` to bound them. The `app` and `namespace` filters use the same Kubernetes name format as parsed intents:
+Run history is Redis-backed. `GET /runs` lists recent runs from a deterministic Redis sorted-set index, newest first. Runs include the originating plan summary, action, app, and namespace so history remains readable even when local plan storage is reset. Use `status`, `action`, `app`, `namespace`, and `plan_id` to filter results, and `limit` to bound them. The `app` and `namespace` filters use the same Kubernetes name format as parsed intents:
 
 ```powershell
 curl "http://localhost:8000/runs?status=succeeded&limit=20"
@@ -188,6 +188,7 @@ Runtime wiring is controlled by environment variables:
 
 - `DEVASSIST_EXECUTION_ENABLED=false` keeps live execution disabled by default.
 - `REDIS_URL=redis://localhost:6379/0` points the runtime at Redis.
+- `DEVASSIST_PLAN_STORE=memory` uses in-memory plan storage. Set it to `redis` when Redis is running and you want created and approved plans to survive API restarts.
 - `KUBERNETES_CONFIG_MODE=auto` supports `auto`, `kubeconfig`, or `in_cluster`.
 - `KUBERNETES_CONTEXT=` can select a local kubeconfig context such as `docker-desktop`.
 - `DEVASSIST_ALLOWED_NAMESPACES=dev` narrows the namespaces DevAssist may touch. If unset, the local-friendly default allowlist is `default,dev,local,staging`.
@@ -202,6 +203,11 @@ Redis is used for run state and run event streams. `RedisRunStore` stores each `
 
 - `devassist:runs:{run_id}`
 - `devassist:runs:{run_id}:events`
+
+When `DEVASSIST_PLAN_STORE=redis`, `RedisPlanRepository` stores each `ExecutionPlan` in Redis with deterministic keys:
+
+- `devassist:plans:{plan_id}`
+- `devassist:plans:index`
 
 For local development, run Redis with Docker when needed:
 
@@ -230,6 +236,7 @@ Implemented so far:
 - Policy validator with tests
 - Execution plan builder with tests
 - In-memory plan repository and approval API with tests
+- Redis-backed plan repository with tests
 - Pending approval queue API with tests
 - Read-only deployment status API with tests
 - Runtime readiness checks for Redis and Kubernetes with tests

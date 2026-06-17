@@ -1,16 +1,18 @@
 from fastapi.testclient import TestClient
 
 from devassist_api import main
-from devassist_api.main import app, plan_repository
+from devassist_api.main import app
+from devassist_core.plan_repository import InMemoryPlanRepository
 from devassist_core.policy import PolicyDecision
 
 
 def setup_function():
-    plan_repository.clear()
+    main.plan_repository = InMemoryPlanRepository()
     main.execution_runtime = None
 
 
 def teardown_function():
+    main.plan_repository = InMemoryPlanRepository()
     main.execution_runtime = None
 
 
