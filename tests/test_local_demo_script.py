@@ -1,4 +1,9 @@
-from scripts.local_demo import ApiError, LocalDemoRequest, run_demo
+from scripts.local_demo import (
+    ApiError,
+    LocalDemoRequest,
+    run_demo,
+    run_plan_only_demo,
+)
 
 
 class FakeResponse:
@@ -138,3 +143,92 @@ def test_local_demo_stops_when_readiness_body_is_not_ready():
         raise AssertionError("expected API error")
 
     assert client.posts == []
+
+
+def test_plan_only_demo_creates_approves_and_previews_policy_without_running():
+    client = FakeClient(
+        [
+            FakeResponse(201, {"plan_id": "plan-123"}),
+            FakeResponse(200, {"plan_id": "plan-123", "status": "approved"}),
+        ],
+        get_responses=[
+            FakeResponse(
+                200,
+                {
+                    "status": "ready",
+                    "dependencies": {
+                        "kubernetes": "not_configured",
+                        "plan_store": "ok",
+                        "redis": "not_configured",
+                    },
+                },
+            ),
+            FakeResponse(
+                200,
+                {
+                    "allowed": False,
+                    "reasons": [
+                        "mutating Kubernetes actions require an approved ExecutionPlan"
+                    ],
+                },
+            ),
+            FakeResponse(
+                200,
+                [
+                    {
+                        "plan": {"plan_id": "plan-123"},
+                        "policy": {"allowed": False, "reasons": ["needs approval"]},
+                    }
+                ],
+            ),
+            FakeResponse(200, {"allowed": True, "reasons": []}),
+        ],
+    )
+
+    result = run_plan_only_demo(
+        client,
+        LocalDemoRequest(
+            base_url="http://localhost:8000",
+            text="deploy api to dev with image hashicorp/http-echo:1.0",
+            approved_by="great",
+        ),
+    )
+
+    assert result.plan_id == "plan-123"
+    assert result.approved_status == "approved"
+    assert result.policy_before_allowed is False
+    assert result.policy_after_allowed is True
+    assert result.pending_approval_count == 1
+    assert client.gets == [
+        {"url": "http://localhost:8000/readyz"},
+        {"url": "http://localhost:8000/plans/plan-123/policy"},
+        {"url": "http://localhost:8000/approvals/pending?limit=10"},
+        {"url": "http://localhost:8000/plans/plan-123/policy"},
+    ]
+    assert client.posts == [
+        {
+            "url": "http://localhost:8000/plans",
+            "json": {"text": "deploy api to dev with image hashicorp/http-echo:1.0"},
+        },
+        {
+            "url": "http://localhost:8000/plans/plan-123/approve",
+            "json": {"approved_by": "great"},
+        },
+    ]
+
+
+def test_plan_only_demo_surfaces_policy_errors():
+    client = FakeClient(
+        [FakeResponse(201, {"plan_id": "plan-123"})],
+        get_responses=[
+            FakeResponse(200, {"status": "ready"}),
+            FakeResponse(404, {"detail": "plan 'plan-123' was not found"}),
+        ],
+    )
+
+    try:
+        run_plan_only_demo(client, LocalDemoRequest())
+    except ApiError as exc:
+        assert str(exc) == "GET http://localhost:8000/plans/plan-123/policy failed with 404: {'detail': \"plan 'plan-123' was not found\"}"
+    else:
+        raise AssertionError("expected API error")

@@ -69,10 +69,12 @@ To run the API and Redis together without enabling live Kubernetes execution:
 ```powershell
 docker compose up --build
 curl http://localhost:8000/healthz
+curl http://localhost:8000/readyz
+python scripts/local_demo.py --plan-only
 docker compose down
 ```
 
-Compose keeps Redis private to the project network, so it will not conflict with a manually started `devassist-redis` container on `localhost:6379`.
+Compose keeps Redis private to the project network, so it will not conflict with a manually started `devassist-redis` container on `localhost:6379`. The `--plan-only` demo checks readiness, creates a plan, previews policy before approval, checks the pending approval queue, approves the plan, and previews policy again without creating a run or mutating Kubernetes.
 
 For the full Redis plus Kubernetes execution workflow, use the PowerShell helper below while the MVP is still local-first.
 
@@ -120,7 +122,7 @@ In a second PowerShell window, run the local demo flow:
 python scripts/local_demo.py
 ```
 
-The script checks `/readyz` first, then calls DevAssist's API to create a plan, approve it, and run it. It does not call `kubectl`.
+The script checks `/readyz` first, then calls DevAssist's API to create a plan, approve it, and run it. It does not call `kubectl`. Use `python scripts/local_demo.py --plan-only` when you want to practice the approval flow without creating an execution run.
 
 Before running a plan, you can preview the deterministic policy decision:
 
