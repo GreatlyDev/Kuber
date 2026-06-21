@@ -106,10 +106,12 @@ For a local API plus Redis stack, use Docker Compose. This keeps live Kubernetes
 ```powershell
 docker compose up --build
 curl http://localhost:8000/healthz
+curl http://localhost:8000/readyz
+python scripts/local_demo.py --plan-only
 docker compose down
 ```
 
-Compose keeps Redis private to the project network, so it will not conflict with another Redis instance already using `localhost:6379`.
+Compose keeps Redis private to the project network, so it will not conflict with another Redis instance already using `localhost:6379`. The `--plan-only` demo creates a plan, previews policy, checks the pending approval queue, approves the plan, and previews policy again without creating an execution run or mutating Kubernetes.
 
 For the local Redis plus Kubernetes execution workflow on Windows, use the helper script from the repo root:
 
@@ -220,7 +222,7 @@ The Windows helper at `scripts/start-local-dev.ps1` will start that container fo
 The current executor is written around the official Kubernetes Python client's `AppsV1Api` method shapes. Tests use fakes, so no cluster is required in CI. For local manual testing later, Docker Desktop Kubernetes, kind, or minikube can provide the kubeconfig that `build_apps_v1_api` loads. Set `DEVASSIST_EXECUTION_ENABLED=true` only when Redis is running and your Kubernetes context is pointed at a dev cluster.
 
 For local Kubernetes practice, see `docs/local-kubernetes-runbook.md`. The demo manifest at `deploy/local/demo-app.yaml` creates an `api` Deployment and Service in the `dev` namespace.
-The helper script at `scripts/local_demo.py` checks `/readyz`, then calls DevAssist's API to create, approve, and run the demo plan.
+The helper script at `scripts/local_demo.py --plan-only` checks `/readyz`, then calls DevAssist's API to create, inspect, and approve a demo plan without running it. When local execution is enabled intentionally, `scripts/local_demo.py` runs the full create, approve, and execute flow.
 
 ## CI
 
@@ -252,7 +254,7 @@ Implemented so far:
 - Local/in-cluster Kubernetes client setup with tests
 - Guarded Kubernetes API executor for deploy, scale, and status plans with tests
 - Local Kubernetes demo manifest and runbook
-- Local demo API script with tests
+- Local demo API script with plan-only and full-run paths with tests
 - Local API Dockerfile and `.dockerignore`
 - Local Docker Compose API plus Redis stack
 - Windows local developer start/stop scripts
