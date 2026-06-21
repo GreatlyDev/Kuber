@@ -220,7 +220,7 @@ The Windows helper at `scripts/start-local-dev.ps1` will start that container fo
 The current executor is written around the official Kubernetes Python client's `AppsV1Api` method shapes. Tests use fakes, so no cluster is required in CI. For local manual testing later, Docker Desktop Kubernetes, kind, or minikube can provide the kubeconfig that `build_apps_v1_api` loads. Set `DEVASSIST_EXECUTION_ENABLED=true` only when Redis is running and your Kubernetes context is pointed at a dev cluster.
 
 For local Kubernetes practice, see `docs/local-kubernetes-runbook.md`. The demo manifest at `deploy/local/demo-app.yaml` creates an `api` Deployment and Service in the `dev` namespace.
-The helper script at `scripts/local_demo.py` calls DevAssist's API to create, approve, and run the demo plan.
+The helper script at `scripts/local_demo.py` checks `/readyz`, then calls DevAssist's API to create, approve, and run the demo plan.
 
 ## CI
 
