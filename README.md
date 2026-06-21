@@ -113,6 +113,12 @@ docker compose down
 
 Compose keeps Redis private to the project network, so it will not conflict with another Redis instance already using `localhost:6379`. The `--plan-only` demo creates a plan, previews policy, checks the pending approval queue, approves the plan, and previews policy again without creating an execution run or mutating Kubernetes.
 
+To try the local browser approval queue, create a draft plan and open `http://localhost:8000/approvals/dashboard`:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://localhost:8000/plans -ContentType "application/json" -Body '{"text":"deploy api to dev with image hashicorp/http-echo:1.0"}'
+```
+
 For the local Redis plus Kubernetes execution workflow on Windows, use the helper script from the repo root:
 
 ```powershell
@@ -141,6 +147,7 @@ Plan endpoints:
 - `GET /plans`
 - `GET /plans/{plan_id}`
 - `GET /approvals/pending`
+- `GET /approvals/dashboard`
 - `POST /plans/{plan_id}/approve`
 - `POST /plans/{plan_id}/reject`
 - `POST /plans/{plan_id}/runs`
@@ -155,6 +162,8 @@ Plan approval is intentionally separate from execution. These endpoints can crea
 curl "http://localhost:8000/approvals/pending?limit=10"
 curl "http://localhost:8000/plans?status=approved&limit=10"
 ```
+
+The local approval dashboard at `GET /approvals/dashboard` is a small browser UI over the same approval endpoints. It can approve or reject draft plans, but it does not create execution runs.
 
 The MVP parser is deterministic and schema-backed. It can parse local-friendly deploy, scale, and status phrases, and it returns `400` when text cannot produce a valid `PipelineIntent` instead of inventing missing mutating inputs:
 
@@ -241,6 +250,7 @@ Implemented so far:
 - Redis-backed plan repository with tests
 - Plan-store readiness checks with tests
 - Pending approval queue API with tests
+- Local approval dashboard with tests
 - Read-only deployment status API with tests
 - Runtime readiness checks for Redis and Kubernetes with tests
 - Guarded run execution API with tests

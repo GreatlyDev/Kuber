@@ -76,6 +76,12 @@ docker compose down
 
 Compose keeps Redis private to the project network, so it will not conflict with a manually started `devassist-redis` container on `localhost:6379`. The `--plan-only` demo checks readiness, creates a plan, previews policy before approval, checks the pending approval queue, approves the plan, and previews policy again without creating a run or mutating Kubernetes.
 
+To see the browser approval queue, create a draft plan and open `http://localhost:8000/approvals/dashboard` before approving it:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://localhost:8000/plans -ContentType "application/json" -Body '{"text":"deploy api to dev with image hashicorp/http-echo:1.0"}'
+```
+
 For the full Redis plus Kubernetes execution workflow, use the PowerShell helper below while the MVP is still local-first.
 
 ## Enable DevAssist Runtime
@@ -143,6 +149,8 @@ To review draft plans that still need a human approval decision, use the pending
 ```powershell
 curl "http://localhost:8000/approvals/pending?limit=10"
 ```
+
+You can also open `http://localhost:8000/approvals/dashboard` to approve or reject draft plans in the local browser UI. The dashboard calls only the existing approval endpoints and does not create execution runs.
 
 Use the printed run id to inspect the stored run and event timeline:
 
