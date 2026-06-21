@@ -1,6 +1,9 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query, Response, status
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from devassist_api.runtime import (
@@ -41,6 +44,8 @@ app = FastAPI(
     description="Local MVP API for Kubernetes-native CI/CD orchestration.",
     lifespan=lifespan,
 )
+STATIC_DIR = Path(__file__).with_name("static")
+app.mount("/assets", StaticFiles(directory=STATIC_DIR), name="assets")
 parser = DeterministicLangChainParser()
 plan_repository = InMemoryPlanRepository()
 execution_runtime = None
@@ -86,6 +91,49 @@ def readyz(response: Response) -> dict[str, object]:
         "status": "ready" if is_ready else "not_ready",
         "dependencies": dependencies,
     }
+
+
+@app.get(
+    "/approvals/dashboard",
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+def approval_dashboard() -> HTMLResponse:
+    return HTMLResponse(
+        """<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DevAssist Approvals</title>
+    <link rel="stylesheet" href="/assets/approval-dashboard.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">DevAssist</p>
+          <h1>Approval Queue</h1>
+        </div>
+        <div class="status-strip" aria-live="polite">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="queue-status">Loading</span>
+        </div>
+      </header>
+
+      <section class="toolbar" aria-label="Approval controls">
+        <label for="approved-by">Approver</label>
+        <input id="approved-by" name="approved-by" value="great" autocomplete="name">
+        <button id="refresh-button" type="button">Refresh</button>
+      </section>
+
+      <section id="approval-list" class="approval-list" aria-live="polite"></section>
+    </main>
+    <script src="/assets/approval-dashboard.js"></script>
+  </body>
+</html>
+"""
+    )
 
 
 @app.post("/plans", response_model=ExecutionPlan, status_code=status.HTTP_201_CREATED)
