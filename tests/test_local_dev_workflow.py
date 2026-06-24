@@ -12,8 +12,10 @@ def test_local_dev_scripts_are_documented() -> None:
 
     assert "scripts/start-local-dev.ps1" in readme
     assert "scripts/stop-local-dev.ps1" in readme
+    assert "scripts/smoke_check.py" in readme
     assert "scripts/start-local-dev.ps1" in runbook
     assert "scripts/stop-local-dev.ps1" in runbook
+    assert "scripts/smoke_check.py" in runbook
 
 
 def test_env_example_documents_safe_local_defaults() -> None:
@@ -52,4 +54,15 @@ def test_stop_local_dev_script_targets_only_local_redis_container() -> None:
 
     assert "devassist-redis" in script
     assert "docker" in script.lower()
+    assert "kubectl" not in script.lower()
+
+
+def test_smoke_check_script_stays_api_only() -> None:
+    script = (ROOT / "scripts" / "smoke_check.py").read_text(encoding="utf-8")
+
+    assert "/healthz" in script
+    assert "/readyz" in script
+    assert "/approvals/dashboard" in script
+    assert "/approvals/pending?limit=25" in script
+    assert "/runs" not in script
     assert "kubectl" not in script.lower()
