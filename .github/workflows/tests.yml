@@ -26,6 +26,14 @@ jobs:
       - name: Run tests
         run: python -m pytest
 
+      - name: Run API smoke check
+        run: |
+          python -m uvicorn devassist_api.main:app --host 127.0.0.1 --port 8000 &
+          API_PID=$!
+          trap 'kill "$API_PID"' EXIT
+          sleep 5
+          python scripts/smoke_check.py --base-url http://127.0.0.1:8000
+
   container:
     name: Docker build
     runs-on: ubuntu-latest

@@ -23,6 +23,25 @@ def test_ci_runs_python_tests():
     assert any(step.get("run") == "python -m pytest" for step in python_job["steps"])
 
 
+def test_ci_runs_live_api_smoke_check():
+    workflow = _workflow()
+    python_job = workflow["jobs"]["python"]
+
+    smoke_step = next(
+        step
+        for step in python_job["steps"]
+        if step.get("name") == "Run API smoke check"
+    )
+
+    assert "python -m uvicorn devassist_api.main:app" in smoke_step["run"]
+    assert "trap 'kill \"$API_PID\"' EXIT" in smoke_step["run"]
+    assert "python scripts/smoke_check.py --base-url http://127.0.0.1:8000" in smoke_step[
+        "run"
+    ]
+    assert "/runs" not in smoke_step["run"]
+    assert "kubectl" not in smoke_step["run"].lower()
+
+
 def test_ci_builds_api_container_without_pushing_registry_image():
     workflow = _workflow()
     container_job = workflow["jobs"]["container"]
