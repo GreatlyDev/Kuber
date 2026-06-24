@@ -70,11 +70,12 @@ To run the API and Redis together without enabling live Kubernetes execution:
 docker compose up --build
 curl http://localhost:8000/healthz
 curl http://localhost:8000/readyz
+python scripts/smoke_check.py
 python scripts/local_demo.py --plan-only
 docker compose down
 ```
 
-Compose keeps Redis private to the project network, so it will not conflict with a manually started `devassist-redis` container on `localhost:6379`. The `--plan-only` demo checks readiness, creates a plan, previews policy before approval, checks the pending approval queue, approves the plan, and previews policy again without creating a run or mutating Kubernetes.
+Compose keeps Redis private to the project network, so it will not conflict with a manually started `devassist-redis` container on `localhost:6379`. The smoke check verifies health, readiness, dashboard assets, pending approvals, policy preview, and approval without creating a run or mutating Kubernetes. The `--plan-only` demo checks readiness, creates a plan, previews policy before approval, checks the pending approval queue, approves the plan, and previews policy again without creating a run or mutating Kubernetes.
 
 To see the browser approval queue, create a draft plan and open `http://localhost:8000/approvals/dashboard` before approving it:
 
@@ -129,6 +130,14 @@ python scripts/local_demo.py
 ```
 
 The script checks `/readyz` first, then calls DevAssist's API to create a plan, approve it, and run it. It does not call `kubectl`. Use `python scripts/local_demo.py --plan-only` when you want to practice the approval flow without creating an execution run.
+
+Use the smoke check when you want the fastest confidence pass over the local MVP without executing Kubernetes actions:
+
+```powershell
+python scripts/smoke_check.py
+```
+
+The smoke check calls only DevAssist HTTP endpoints. It verifies `/healthz`, `/readyz`, the approval dashboard, static dashboard assets, pending approvals, policy preview, and plan approval.
 
 Before running a plan, you can preview the deterministic policy decision:
 

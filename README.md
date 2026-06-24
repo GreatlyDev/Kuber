@@ -45,6 +45,7 @@ tests/
   test_schemas.py
 scripts/
   local_demo.py
+  smoke_check.py
   start-local-dev.ps1
   stop-local-dev.ps1
 ```
@@ -107,11 +108,12 @@ For a local API plus Redis stack, use Docker Compose. This keeps live Kubernetes
 docker compose up --build
 curl http://localhost:8000/healthz
 curl http://localhost:8000/readyz
+python scripts/smoke_check.py
 python scripts/local_demo.py --plan-only
 docker compose down
 ```
 
-Compose keeps Redis private to the project network, so it will not conflict with another Redis instance already using `localhost:6379`. The `--plan-only` demo creates a plan, previews policy, checks the pending approval queue, approves the plan, and previews policy again without creating an execution run or mutating Kubernetes.
+Compose keeps Redis private to the project network, so it will not conflict with another Redis instance already using `localhost:6379`. The smoke check verifies health, readiness, dashboard assets, pending approvals, policy preview, and approval without creating an execution run or mutating Kubernetes. The `--plan-only` demo creates a plan, previews policy, checks the pending approval queue, approves the plan, and previews policy again without creating an execution run or mutating Kubernetes.
 
 To try the local browser approval queue, create a draft plan and open `http://localhost:8000/approvals/dashboard`:
 
@@ -232,6 +234,7 @@ The current executor is written around the official Kubernetes Python client's `
 
 For local Kubernetes practice, see `docs/local-kubernetes-runbook.md`. The demo manifest at `deploy/local/demo-app.yaml` creates an `api` Deployment and Service in the `dev` namespace.
 The helper script at `scripts/local_demo.py --plan-only` checks `/readyz`, then calls DevAssist's API to create, inspect, and approve a demo plan without running it. When local execution is enabled intentionally, `scripts/local_demo.py` runs the full create, approve, and execute flow.
+The smoke check at `scripts/smoke_check.py` is the fastest local MVP confidence check. It uses only DevAssist HTTP endpoints and never calls `/runs`.
 
 ## CI
 
@@ -265,13 +268,14 @@ Implemented so far:
 - Guarded Kubernetes API executor for deploy, scale, and status plans with tests
 - Local Kubernetes demo manifest and runbook
 - Local demo API script with plan-only and full-run paths with tests
+- Local MVP smoke check script with tests
+- Packaged dashboard static assets
 - Local API Dockerfile and `.dockerignore`
 - Local Docker Compose API plus Redis stack
 - Windows local developer start/stop scripts
 - README setup instructions
 
-Not implemented yet:
+Deferred for later:
 
 - Real LangChain model calls
-- Approval UI
-- Production deployment manifest
+- Production deployment manifest and hosted deployment
