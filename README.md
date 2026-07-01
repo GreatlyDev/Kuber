@@ -2,6 +2,32 @@
 
 DevAssist is a Kubernetes-native AI-assisted CI/CD orchestrator. The MVP is built for local development clusters and focuses on safe intent parsing, explicit execution plans, deterministic validation, and event/state storage in Redis.
 
+## What This Project Demonstrates
+
+DevAssist is a resume-focused DevOps platform project that shows how an AI-assisted deployment workflow can be designed without giving the model direct infrastructure control. The system turns natural-language deployment requests into strict `ExecutionPlan` records, requires human-approved execution plans for mutating Kubernetes actions, records run state in Redis, and executes through the Kubernetes Python API client rather than shelling out to `kubectl`.
+
+The local MVP demonstrates:
+
+- A FastAPI control plane with health, readiness, plan, approval, run, and deployment-state endpoints
+- A deterministic parser and strict Pydantic schemas for validating deployment intent
+- A policy layer that blocks unsafe or unsupported actions before execution
+- Human-approved execution plans with an approval dashboard
+- Redis-backed run state, run events, run history, and optional Redis-backed plan storage
+- Kubernetes Python API client integration for deploy, scale, and status actions
+- Docker Compose local services, a non-root API container, and GitHub Actions tests plus live API smoke checks
+
+## Quick Local Demo
+
+The fastest safe demo path runs the API plus Redis, proves the dashboard and approval flow work, and avoids live Kubernetes mutation:
+
+```powershell
+docker compose up --build
+python scripts/smoke_check.py
+python scripts/local_demo.py --plan-only
+```
+
+Open `http://localhost:8000/approvals/dashboard` to view and approve draft plans in the browser. For the full walkthrough, including the optional live Kubernetes execution path, see `docs/local-mvp-demo.md`.
+
 ## MVP Safety Rules
 
 - The LLM may parse natural language into structured intent, but it must never execute commands.
@@ -23,6 +49,7 @@ deploy/
   local/
     demo-app.yaml
 docs/
+  local-mvp-demo.md
   local-kubernetes-runbook.md
 packages/
   core/
@@ -267,6 +294,7 @@ Implemented so far:
 - Local/in-cluster Kubernetes client setup with tests
 - Guarded Kubernetes API executor for deploy, scale, and status plans with tests
 - Local Kubernetes demo manifest and runbook
+- Local MVP demo walkthrough
 - Local demo API script with plan-only and full-run paths with tests
 - Local MVP smoke check script with tests
 - Packaged dashboard static assets
