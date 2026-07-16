@@ -1,4 +1,4 @@
-# DevAssist
+## DevAssist
 
 DevAssist is a Kubernetes-native AI-assisted CI/CD orchestrator. The MVP is built for local development clusters and focuses on safe intent parsing, explicit execution plans, deterministic validation, and event/state storage in Redis.
 
